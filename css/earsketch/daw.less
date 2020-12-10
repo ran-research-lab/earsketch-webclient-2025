@@ -1,0 +1,809 @@
+@import "variables.less";
+
+@timeline-height: 15px;
+@measureline-height: 15px;
+@control-height: 30px;
+@vert-zoom-offset: 15px;
+@horz-zoom-offset: 15px;
+@border-width:1px;
+
+#daw-label {
+  float: left;
+}
+
+#daw-container {
+  position: absolute;
+  right: 0;
+  left: @vert-zoom-offset;
+  bottom: 0;
+  top: @horz-zoom-offset;
+  overflow: auto;
+  border-left: @border-width solid @med-bg;
+  border-top: @border-width solid @med-bg;
+}
+
+#zoom-container {
+  position: absolute;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  top: @panel-label-height;
+  border-top: @border-width solid @med-bg;
+}
+
+#daw-main {
+  /*width: 1100px; */ /*width of daw window*/
+}
+
+#daw-timeline{
+  height: @timeline-height;
+  position: absolute;
+  top: 0;
+  z-index: 9;
+  overflow: hidden;
+  background: @bg;
+  opacity: 0.9;
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+  border-bottom-color: @gen-light-grey;
+  box-shadow: -5px 2px 10px whitesmoke;
+}
+
+#daw-timeline:hover, #daw-measureline:hover{
+  cursor: pointer;
+}
+
+#daw-measureline{
+  height: @measureline-height;
+  position: absolute;
+  top: @timeline-height;
+  z-index: 9;
+  overflow: hidden;
+  background: @bg;
+  opacity: 0.8;
+  box-shadow: 0px 2px 10px @dark-bg;
+}
+
+.daw-track-group-container{
+  margin-top: @control-height;  /*place just under timeline*/
+}
+
+.daw-track {
+  border-bottom-style: solid;
+  border-width: @border-width;
+  overflow: hidden;
+  position: relative;
+  height: 100%;
+  z-index: 0;
+}
+.daw-track.muted {
+  background: #696969;
+  opacity: 0.2;
+}
+
+.dawTrackCtrl {
+  width: 100px;
+  height: 100%;
+  float: left;
+  border-bottom-style: solid;
+  border-right-style: solid;
+  border-color: @gen-light-grey;
+  border-width: @border-width;
+  border-left:0;
+  background-color: @gen-light-black;
+  position: relative;
+  z-index: 21;
+}
+
+.dawAudioClipContainer {
+  border-right-style: solid;
+  border-right-width: @border-width;
+  float: left;
+  position: absolute;
+  overflow: hidden;
+  border-radius: @border-radius-med;
+  height:99%;
+  opacity: 0.9;
+}
+
+.clipWrapper {
+  position: relative;
+}
+
+.clipName {
+  padding: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: absolute;
+  left: 0;
+  cursor: default;
+  font-size: x-small;
+  color: black;
+}
+
+/* Webkit slider styles */
+#dawVolumeSlider {
+  -webkit-appearance: none;
+  width: 80px;
+  height: 4px;
+  background-color: #fff;
+  margin-right: 20px;
+  margin-top: -4px;
+}
+
+#dawVolumeSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  background: #AAA;
+  width: 9px;
+  height: 24px;
+  cursor: pointer;
+}
+
+/* Firefox slider styles */
+#dawVolumeSlider::-moz-range-track {
+  width: 80px;
+  border-radius: @border-radius-small;
+  height: 14px;
+  vertical-align:middle;
+  margin-top:12px;
+  background-color: #fff;
+}
+#dawVolumeSlider::-moz-range-thumb {
+  border: none;
+  background: rgb(66, 139, 202);
+  width: 12px;
+  height: 34px;
+  border-radius: @border-radius-small;
+  cursor: pointer;
+}
+/* IE slider styles */
+#dawVolumeSlider::-ms-fill-upper, #dawVolumeSlider::-ms-fill-lower {
+  background:transparent;
+}
+#dawVolumeSlider::-ms-track {
+  width: 80px;
+  border-radius: @border-radius-small;
+  height: 14px;
+  vertical-align:middle;
+  margin-top:12px;
+  background-color: #fff;
+}
+#dawVolumeSlider::-ms-thumb {
+  border: none;
+  background: rgb(66, 139, 202);
+  width: 12px;
+  height: 34px;
+  border-radius: @border-radius-small;
+  cursor: pointer;
+}
+.volumeLabel {
+  color: @light-font;
+  line-height: 30px;
+  font-size: 30px;
+  padding: 2px 0;
+  cursor: default;
+}
+
+.dawTrackName{
+  color: @gen-light-grey;
+  font-size: 16px;
+  width: 20%;
+  height: 100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  border-right-style: solid;
+  border-width: @border-width;
+  border-color: @gen-light-grey;
+}
+
+.dawTrackContainer {
+  position: relative;
+  //-moz-transition: all 0.5s linear;
+  //-ms-transition: all 0.5s linear;
+  //-o-transition: all 0.5s linear;
+  //-webkit-transition: all 0.5s linear;
+  //transition: all 0.5s linear;
+  //transition: all 0.5s linear;
+}
+
+.dawTrackEffectName {
+  color: @gen-light-grey;
+  font-size: small;
+  position: absolute;
+  left: 37px;
+  top: 28px;
+}
+
+.dawTrackEffectDropdown {
+  font-size: 12px;
+  position: absolute;
+  width: 16px;
+  height: 20px;
+  text-align: center;
+  right:0;
+  top: 5px;
+}
+
+.dawTrackEffectDropdown:hover{
+  color:black;
+}
+
+
+.dawTrackEffectDropdownButton{
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  bottom: 5px
+}
+
+.dawTrackEffectDropdownButton:hover{
+  cursor: pointer;
+}
+
+.dawTrackEffect{
+  position: relative;
+  left: 100px;
+  border-bottom: solid;
+  border-color: #000000;
+  border-width: @border-width;
+  /* background-color: #d1eeff; */
+  height: 100%;
+  border-radius: @border-radius-small;
+  opacity: 0.7;
+}
+.dawTrackEffect.bypassed {
+  background: #696969;
+  opacity: 0.2;
+}
+
+.dawEffectCtrl {
+  width: 100px;
+  height: inherit;
+  float: left;
+  border-bottom-style: solid;
+  border-width: @border-width;
+  border-color: @gen-light-grey;
+  background-color: @dark-bg;
+  position: absolute;
+  z-index: 21;
+}
+
+.dawEffectBypassButton {
+  border-radius: @border-radius-large;
+  position: absolute;
+  left: 34px;
+  top: 3px;
+}
+
+.dawEffectBypassButton, .dawEffectBypassButton:focus {
+  background: @gen-light-grey-1;
+}
+
+.dawEffectBypassButton.active, .dawEffectBypassButton.active:focus {
+  background: @red;
+}
+
+.dawEffectBypassButton.active:hover {
+  background: rgba(255,0,0,0.7) !important;
+}
+
+.dawEffectBypassButton[disabled] {
+  opacity: 0.1 !important;
+}
+/*svg path*/
+#zoom-container svg, #zoom-container svg:hover {
+  width: 100%;
+  fill:none;
+}
+
+#zoom-container svg.axis{
+  margin-left:100px;
+}
+
+#zoom-container svg.axis path, #zoom-container svg.axis:hover path{
+  color:black;
+  margin-left:100px;
+}
+
+.axis {
+  shape-rendering: crispEdges;
+  stroke-width: 1;
+  stroke: #fff;
+  font-size: x-small;
+}
+
+.axis text {
+  shape-rendering: crispEdges;
+}
+
+.axis .minor {
+  stroke-opacity: 0.5;
+}
+
+.axis path {
+  display: none;
+}
+
+svg.effectAxis{
+  position: absolute;
+  left: 0px;
+}
+
+svg.effectSvg{
+  position: absolute;
+  left: 0px;
+  stroke-width: 1;
+}
+
+svg.effectSvg path {
+  stroke: steelblue;
+  stroke-width: 1;
+  fill: none;
+}
+
+.daw-transport-container {
+  display: flex;
+}
+
+.daw-transport-button button {
+  font-size: 20px;
+}
+
+.daw-transport-button {
+  //-moz-transition: all 0.5s linear;
+  //-ms-transition: all 0.5s linear;
+  //-o-transition: all 0.5s linear;
+  //-webkit-transition: all 0.5s linear;
+  //transition: all 0.5s linear;
+  display: flex;
+  align-items: center;
+}
+
+.daw-transport-button.ng-hide {
+  opacity: 0;
+  width: 0px !important;
+}
+
+.daw-transport-button.follow-icon {
+  -webkit-transform: rotate(90deg);
+  -moz-transform: rotate(90deg);
+  -o-transform: rotate(90deg);
+  -ms-transform: rotate(90deg);
+  transform: rotate(90deg);
+  width: 40px;
+}
+
+.dawSoloButton{
+  position: absolute;
+  right: 45px;
+  top: 5px;
+  width: 22px;
+  height: 18px;
+  border-radius: 8px;
+  padding-top: 1px;
+}
+
+.dawSoloButton, .dawSoloButton:focus {
+  background: @gen-light-grey-1;
+}
+
+.dawSoloButton.active, .dawSoloButton.active:focus {
+  background: @green;
+}
+
+.dawSoloButton.active:hover {
+  background: green !important;
+}
+
+.dawMuteButton{
+  position: absolute;
+  right: 16px;
+  top: 2px;
+  width: 22px;
+  height: 18px;
+  border-radius: 8px;
+  top: 5px;
+  padding-top: 1px;
+}
+
+.dawMuteButton, .dawMuteButton:focus {
+  background: @gen-light-grey-1;
+}
+
+.dawMuteButton:hover, .dawSoloButton:hover, .dawEffectBypassButton:hover {
+  background: #e6e6e6 !important;
+}
+
+.dawMuteButton.active, .dawMuteButton.active:focus {
+  background: @red;
+}
+
+.dawMuteButton.active:hover {
+  background: rgba(255,0,0,0.7) !important;
+}
+
+#dawProjectSettings{
+  float: right;
+}
+
+.btn-play {
+  color:@gen-play !important;
+}
+
+.btn-play:hover, .play-run:active, .play-run:focus{
+  opacity: 0.7;
+}
+
+.btn-effect{
+  position:absolute;
+  top:@horz-zoom-offset + @border-width;
+  left:@vert-zoom-offset + @border-width;
+  height:@control-height;
+  z-index: 34;
+  width: 100px;
+  border-radius: 0px;
+  background: @selected-bg;
+  color: @tab-text;
+}
+
+.btn-effect > span {
+  position: absolute;
+  letter-spacing : 2px;
+}
+
+.btn-effect span:nth-child(1) {
+  left: 5px;
+  top: 4px;
+}
+
+.btn-effect span:nth-child(2), .btn-effect span:nth-child(3) {
+  right: 5px;
+  top: 6px;
+  font-size: medium;
+}
+
+.btn-effect span:last-child:active {
+  right: 5px;
+  top: 6px;
+  font-size: medium;
+}
+
+.btn-zoom{
+  font-size:15px !important;
+  height: @vert-zoom-offset;
+  width: @vert-zoom-offset;
+  padding: 0;
+  line-height: @vert-zoom-offset;
+}
+
+#v-zoom-in{
+  position:absolute;
+  bottom:0;
+}
+
+#v-zoom-out{
+  position:absolute;
+  top:11px;
+}
+
+#h-zoom-in{
+  position:absolute;
+  top:0;
+  right:0;
+}
+
+#h-zoom-out{
+  position:absolute;
+  top:0;
+  left: 11px;
+}
+.bottomControls{
+  margin-top: 5px;
+}
+
+.ui-slider {
+  height: 15px;
+  width: 200px;
+  left: 8px;
+}
+.daw-highlight {
+  position: absolute;
+  top: 0;
+  height: 1000px;
+  background-color: rgba(255, 153, 0, 0.3);
+  border-left: 1px solid rgb(255, 153, 0);
+  border-right: 1px solid rgb(255, 153, 0);
+  z-index: 15;
+  margin-left: 100px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.daw-cursor {
+  width: 3px;
+  height: 100%;
+  float: left;
+  margin-left: 98px;
+  z-index: 10;
+  position: absolute;
+  top: 0;
+}
+
+.daw-marker {
+  width: 3px;
+  height: 100%; /*smaller than daw height to avoid infinite scroll*/
+  float: left;
+  margin-left: 98px;
+  z-index: 20;
+  position: absolute;
+  background-color: #ff0000;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+}
+
+.daw-sched-marker {
+  width: 3px;
+  height: 100%; /*smaller than daw height to avoid infinite scroll*/
+  float: left;
+  margin-left: 98px;
+  z-index: 20;
+  position: absolute;
+  background-color: #6DFED4;
+  animation: fadeIn 0.2s infinite alternate;
+}
+
+/* Zoom Sliders */
+
+#horz-zoom-slider-container {
+  position: absolute;
+  margin-left: 100px + @vert-zoom-offset;
+  width: calc(~"100% - 115px"); /* less.jss needs ~".." to compile calc */
+  display: flex;
+  floar: right;
+  outline: none;
+  overflow: hidden;
+  height: @horz-zoom-offset;
+  top: 0px;
+  opacity: 0.2;
+
+  -moz-animation: fadeout 25s linear forwards;
+  -ms-animation: fadeout 25s linear forwards;
+  -o-animation: fadeout 25s linear forwards;
+  -webkit-animation: fadeout 25s linear forwards;
+  animation: fadeout 25s linear forwards;
+}
+
+#horz-zoom-slider-container:hover {
+  opacity: 1;
+
+  -moz-animation: fadein 1s linear forwards;
+  -ms-animation: fadein 1s linear forwards;
+  -o-animation: fadein 1s linear forwards;
+  -webkit-animation: fadein 1s linear forwards;
+  animation: fadeout fadein 1s linear forwards;
+}
+
+#horz-zoom-slider-container > span {
+  color: grey;
+  position: absolute;
+}
+
+#horz-zoom-slider-container .zoom-out {
+  font-size: 38px;
+  left: 4px;
+  bottom: -18px;
+}
+
+#horz-zoom-slider-container .zoom-in {
+  right: 3px;
+  font-size: 22px;
+  bottom: -8px;
+}
+
+
+#horz-zoom-slider-container .rzslider {
+  margin: 0px;
+  top: 3px;
+}
+
+#horz-zoom-slider-container .rzslider .rz-bar {
+  top: 13px;
+  height: 15px;
+  border-color: @gen-light-grey-1;
+  border-style: solid;
+  border-width: 1px;
+  background: none;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+  border-right-width: 18px;
+  border-left-width: 18px;
+}
+
+#horz-zoom-slider-container .rzslider .rz-pointer {
+  top: -2px;
+  width: 50px;
+  height: 13px;
+  background-color: grey;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+  outline: none;
+  border-style: solid;
+  border-width: 1px;
+}
+
+#horz-zoom-slider-container .rz-pointer:after {
+  display: none;
+}
+
+#vert-zoom-slider-container {
+  height: calc(~"100% - 45px"); /* less.jss needs ~".." to compile calc */
+  width: @vert-zoom-offset;
+  top: @vert-zoom-offset + @control-height;
+  position: absolute;
+  opacity: 0.2;
+
+  -moz-animation: fadeout 8s linear forwards;
+  -ms-animation: fadeout 8s linear forwards;
+  -o-animation: fadeout 8s linear forwards;
+  -webkit-animation: fadeout 8s linear forwards;
+  animation: fadeout 8s linear forwards;
+}
+
+#vert-zoom-slider-container:hover {
+  opacity: 1;
+
+  -moz-animation: fadein 1s linear forwards;
+  -ms-animation: fadein 1s linear forwards;
+  -o-animation: fadein 1s linear forwards;
+  -webkit-animation: fadein 1s linear forwards;
+  animation: fadein 1s linear forwards;
+}
+
+@-webkit-keyframes fadein {
+  100% { opacity: 1; }
+}
+
+@keyframes fadein {
+  100% { opacity: 1; }
+}
+
+@-webkit-keyframes fadeout {
+  0% { opacity: 1; }
+}
+
+@keyframes fadeout {
+  0% { opacity: 1; }
+}
+
+#vert-zoom-slider-container > span {
+  color: grey;
+  position: absolute;
+}
+
+#vert-zoom-slider-container .zoom-out {
+  font-size: 38px;
+  left: 2px;
+  top: -18px;
+}
+
+#vert-zoom-slider-container .zoom-in {
+  left: 2px;
+  font-size: 22px;
+  bottom: -6px;
+}
+
+#vert-zoom-slider-container .rzslider {
+  margin: 0px;
+  left: 3px;
+}
+
+#vert-zoom-slider-container .rzslider.rz-vertical .rz-bar {
+  left: 13px !important;
+  width: 15px;
+  border-color: @gen-light-grey-1;
+  border-style: solid;
+  border-width: 1px;
+  background: none;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+  border-top-width: 18px;
+  border-bottom-width: 18px;
+}
+
+#vert-zoom-slider-container .rzslider .rz-pointer {
+  height: 50px;
+  width: 13px;
+  background-color: grey;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+  outline: none;
+  border-style: solid;
+  border-width: 1px;
+  left: -2px !important;
+}
+
+#vert-zoom-slider-container .rz-pointer:after {
+  display: none;
+}
+
+/* Track slide animations */
+
+#dawTrackEffectContainer {
+  //-moz-transition: all 0.5s linear;
+  //-ms-transition: all 0.5s linear;
+  //-o-transition: all 0.5s linear;
+  //-webkit-transition: all 0.5s linear;
+  //transition: all 0.5s linear;
+}
+
+.clipWrapper canvas{
+  display: block;
+  //-moz-transition: all 0.5s linear;
+  //-ms-transition: all 0.5s linear;
+  //-o-transition: all 0.5s linear;
+  //-webkit-transition: all 0.5s linear;
+  //transition: all 0.5s linear;
+}
+
+#dawTrackEffectContainer.ng-hide {
+  opacity: 0;
+  height: 0px !important;
+}
+
+#daw-label > span > span:not(:first-child)  {
+  padding-left: 7px;
+}
+
+.masterTrackFiller {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 16px;
+}
+
+@keyframes playFlash {
+    0% { background-color: black; }
+    50% { background-color: yellow; }
+    100% { background-color: black; }
+}
+
+.flashButton {
+  -moz-animation: playFlash 1s ease-out;
+  -moz-animation-iteration-count: infinite;
+
+  -webkit-animation: playFlash 1s ease-out;
+  -webkit-animation-iteration-count: infinite;
+
+  -ms-animation: playFlash 1s ease-out;
+  -ms-animation-iteration-count: infinite;
+}
+
+
+@-webkit-keyframes playFlash {
+    0% { background-color: black; }
+    50% { background-color: yellow; }
+    100% { background-color: black; }
+}
+
+@-moz-keyframes playFlash {
+    0% { background-color: black; }
+    50% { background-color: yellow; }
+    100% { background-color: black; }
+}
+
+@-ms-keyframes playFlash {
+    0% { background-color: black; }
+    50% { background-color: yellow; }
+    100% { background-color: black; }
+}
+
+

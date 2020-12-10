@@ -1,0 +1,71 @@
+<div class="share-script">
+    <div class="modal-header">
+        <h4 class="modal-title">
+            <i class="icon icon-share2" ></i>&nbsp;Submit&nbsp;"{{script.name}}" to Competition
+        </h4>
+    </div>
+    <div class="modal-body">
+        <!-- caution: tabset seems to create a child scope, not bound to the original scope -->
+        <div class="share-script-menu-descriptions">
+            Enter your script to the <a href="https://www.amazonfutureengineer.com/earsketch" target="_blank"> Competition.</a>
+        </div>
+        <div>
+            <!-- <div class="modal-section-header">
+                <span>
+                    <i class="icon icon-copy" style="color:#6DFED4;"></i>
+                    Sharable View-only Link
+                </span>
+            </div> -->
+            <!-- <div id="share-link-container" style="margin-top:15px;">
+                <div class="share-link">
+                    <span ng-show="!showLockedShareLink">{{sharelink}}</span>
+                    <span ng-hide="!showLockedShareLink">{{lockedShareLink}}</span>
+                </div>
+                <div>
+                    <span class="download-share-url" ng-click="downloadShareUrl()"><i class="glyphicon glyphicon-download-alt" uib-tooltip="Download URL shortcut file" tooltip-placement="bottom" tooltip-append-to-body="true"></i></span>
+                    <span class="copy-share-link" ng-hide="showLockedShareLink" clipboard text="sharelink" uib-popover="Copied!" popover-placement="top-right" popover-animation="true" popover-trigger="outsideClick"><i class="icon icon-paste4" uib-tooltip="Copy To Clipboard" tooltip-placement="bottom" tooltip-append-to-body="true"></i></span>
+                    <span class="copy-share-link" ng-hide="!showLockedShareLink" clipboard text="lockedShareLink" uib-popover="Copied!" popover-placement="top-right" popover-animation="true" popover-trigger="outsideClick"><i class="icon icon-paste4" uib-tooltip="Copy To Clipboard" tooltip-placement="bottom" tooltip-append-to-body="true"></i></span>
+                </div>
+            </div> -->
+            <!-- <div style="text-align: center; color:lightgray;">
+                Copy the above link and paste it into the submission form.
+            </div> -->
+            <hr style="margin-top:10px;">
+            <uib-accordion>
+            <div uib-accordion-group heading="More Information">
+                <div class="form-group" style="text-align:center;">
+                    <div class="modal-section-header">
+                        <span>Competition Rules</span>
+                    </div>
+                    <ul>
+                        <li>Submissions are accepted until January 20, 2020 at midnight EST.</li>
+                        <li>Limit one submission per student.</li>
+                        <li>Students may work individually or in pairs.</li>
+                        <li>Any high school student in the US can participate in the competition.</li>
+                        <li>Entries must include at least one stem from the Ciara Set collection.</li>
+                        <li>You can compose in any musical genre. There are no restrictions in terms of style of music or coding.</li>
+                        <li>Submissions must be at least 30 seconds in length and no more than 3 minutes in duration.</li>
+                        <li>Sounds used from sources different than the EarSketch database (ex: freesound.org) should NOT be copyrighted. The rules of the license that apply to the sounds should be respected (ex: acknowledging the source). Songs that contain copyrighted sounds will not be accepted.</li>
+                        Entries will be judged on both musical quality and algorithmic thinking.</li>
+                        <li>100 finalists will be selected to receive a $25 Amazon Gift Card.</li>
+                        <li>10 winners will be selected from among the finalists. Georgia winners will be invited to the Guthman Musical Instrument Competition, hosted at Georgia Tech on March 6-7, 2020, and recognized at a celebration held at Georgia Tech. They will also receive a PreSonus Audiobox 96 Studio.</li>
+                        <li>All prizes will be sent to a school address.</li>
+
+                    </ul>
+                </div>
+            </div>
+        </uib-accordion>
+            <hr style="margin-top:10px;">
+            <div style="text-align: center; margin: auto;">
+                <a id="submitToPopulyButton" ng-click="updatePopulyLink()"><button style="min-width: 270px; font-size: 26px; color: black; background: #D3D25A;">Click Here to Submit </button></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-footer" style="border-top: 0;">
+        <div style="text-align:right; height:3em; line-height:3em;">
+            <span ng-click="close()"><a href="#" style="color:#d04f4d;margin-right:14px;"><i class="icon icon-cross2"></i>CANCEL</a></span>
+        </div>
+    </div>
+</div>
+

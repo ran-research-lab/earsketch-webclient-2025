@@ -1,0 +1,44 @@
+# Visual Studio
+.vs/
+
+# Web Client
+node_modules/*
+npm-debug.log
+karma_html/
+earsketch.min.js*
+
+# EarSketchWS
+EarSketchWS/build
+EarSketchWS/dist
+
+# IntelliJ IDEA
+.idea/
+*.iml
+out/
+
+# Eclipse
+.eclipse
+.classpath
+.settings/
+
+# Binaries (non-text)
+*.zip
+*.wav
+*.reapeaks
+
+# OS generated files
+.DS_Store
+.Spotlight-V100
+.Trash/
+.Trashes/
+*.swp
+ehthumbs.db
+Thumbs.db
+Icon?
+*.icloud
+
+# Recommendation System Files
+EarSketchRecommendations/__pycache__/*
+EarSketchRecommendations/utils
+EarSketchRecommendations/*.txt
+EarSketchRecommendations/*.json
