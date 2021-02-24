@@ -1,4 +1,5 @@
 // Global imports of CSS
+import '../../css/earsketch/allstyles.less'
 import './tailwind.css';
 
 import { configureStore } from '@reduxjs/toolkit';
