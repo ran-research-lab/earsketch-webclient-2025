@@ -174,13 +174,6 @@ require(['angular'], () => {
     require('shareController');
     require('submitAWSController');
 
-    require('soundBrowserController');
-    require('scriptBrowserController');
-    require('shareBrowserController');
-    require('apiBrowserController');
-    require('curriculumPaneController');
-    require('curriculumSearchController');
-
     // React components
     require('./bubble/Bubble');
     require('./browser/API');
