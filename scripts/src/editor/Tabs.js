@@ -3,6 +3,7 @@ import { Provider, useSelector, useDispatch } from 'react-redux';
 import { hot } from 'react-hot-loader/root';
 import { react2angular } from 'react2angular';
 import { usePopper } from "react-popper";
+import * as classNames from 'classnames';
 
 import * as appState from '../app/appState';
 import * as tabs from './tabState';
@@ -35,9 +36,6 @@ const Tab = ({ scriptID, scriptName, index }) => {
     const modified = useSelector(tabs.selectModifiedScripts).includes(scriptID);
     const ngTabControllerScope = helpers.getNgController('tabController').scope();
     const [highlight, setHighlight] = useState(false);
-    const theme = useSelector(appState.selectColorTheme);
-    const activeTabStyle = 'text-white bg-black dark:text-black dark:bg-gray-300';
-    const inactiveTabStyle = theme==='light' && (highlight ? 'bg-gray-100 border-gray-200' : 'text-gray-600 bg-gray-200 border-gray-300') || (highlight ? 'bg-gray-400 border-gray-400' : 'text-gray-300 bg-gray-800 border-gray-700');
 
     const allScripts = useSelector(scripts.selectAllScriptEntities);
     const script = allScripts[scriptID];
@@ -49,13 +47,29 @@ const Tab = ({ scriptID, scriptName, index }) => {
         script.collaborative && dispatch(editor.setBlocksMode(false));
     }, [activeTabID]);
 
+    var tabClass = classNames('w-48 flex-shrink-0 h-14 cursor-pointer border',
+        {
+            'bg-blue border-blue': active,
+            'bg-gray-200 hover:bg-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800': !active, // background
+            'border-gray-300 hover:border-gray-200 dark:border-gray-800 dark:hover:border-gray-900': !active // border
+        },
+        {
+            // treating tab text color separately for code readability
+            'text-white dark:text-gray-300': active && !modified,
+            'text-red-500':  active && modified,
+            'text-red-600': !active && modified,
+            'text-gray-600 hover:text-white dark:text-gray-400': !active && !modified
+        },
+        'flex relative');
+    var closeButtonClass = classNames('flex items-center hover:text-gray-800',
+        {
+            'hover:bg-gray-400': !active,
+            'hover:bg-gray-300': active
+        });
+
     return (
         <div
-            className={`
-                w-48 flex-shrink-0 h-12 cursor-pointer
-                ${active ? activeTabStyle : (inactiveTabStyle)+' border'}
-                flex relative
-            `}
+            className={tabClass}
             key={scriptID}
             onClick={() => {
                 dispatch(tabs.setActiveTabAndEditor(scriptID));
@@ -78,13 +92,13 @@ const Tab = ({ scriptID, scriptName, index }) => {
                     <div className='truncate select-none align-middle'>{scriptName}</div>
                 </div>
                 <button
-                    className='flex items-center'
+                    className={closeButtonClass}
                     onClick={(event) => ngTabControllerScope.closeTab(index, event)}
                 >
                     <i className={`icon-cross2 cursor-pointer`} />
                 </button>
             </DropdownContextMenuCaller>
-            { modified && (<div className={`w-full border-b-4 border-red-500 absolute bottom-0 opacity-50`}/>) }
+            { active && (<div className={`w-full border-b-4 border-amber absolute bottom-0`} />) }
         </div>
     );
 };
@@ -96,7 +110,7 @@ const CloseAllTab = () => {
         <div
             className={`
                 w-48 flex-shrink-0 h-12 p-3 cursor-pointer
-                flex justify-around items-center
+                flex items-center
                 text-white bg-gray-800 border border-gray-800    
             `}
             onClick={() => ngTabControllerScope.closeAllTabs()}
