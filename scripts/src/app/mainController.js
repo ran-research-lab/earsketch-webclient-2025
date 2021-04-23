@@ -999,11 +999,33 @@ app.controller("mainController", ['$rootScope', '$scope', '$state', '$http', '$u
     
     $scope.toggleCAIWindow = () => {
         $scope.showCAIWindow = !$scope.showCAIWindow;
+        if ($scope.showCAIWindow) {
+            $ngRedux.dispatch(layout.setEast({ open: true }));
+            Layout.resetHorizontalSplits();
+            angular.element('curriculum').hide();
+            angular.element('div[caiwindow]').show();
+            document.getElementById('caiButton').classList.remove('flashNavButton');
+        } else {
+            angular.element('div[caiwindow]').hide();
+            angular.element('curriculum').show();
+            document.getElementById('caiButton').classList.add('flashNavButton');
+        }
+        // $scope.$apply();
     };
 
     // Note: Used in api_doc.js links to the curriculum Effects chapter.
     $scope.loadCurriculumChapter = location => {
+        if ($scope.showCAIWindow) {
+            $scope.toggleCAIWindow();
+        }
         $ngRedux.dispatch(curriculum.fetchContent({ location: location.split('-') }));
+
+        if (FLAGS.SHOW_CAI) {
+            // Note: delay $scope.$apply() to update the angular CAI Window.
+            $setTimeout(function() {
+                $scope.$apply();
+            }, 100);
+        }
     };
 
     $scope.$on('createScript', () => {
