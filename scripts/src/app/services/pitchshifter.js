@@ -7,9 +7,11 @@
  * @todo This service is only necessary until audio workers become implemented
  * in all major browsers.
  */
+import esconsole from '../../esconsole'
+import * as ESUtils from '../../esutils'
 
-app.factory('pitchshifter', ['renderer','audioContext','ESUtils','userConsole',
-function pitchshifterFactory(render, ctx, ESUtils, userConsole) {
+app.factory('pitchshifter', ['renderer','audioContext','userConsole',
+function pitchshifterFactory(render, ctx, userConsole) {
 
     var QFRAMES = 16;
     var FRAMESIZE = 256;

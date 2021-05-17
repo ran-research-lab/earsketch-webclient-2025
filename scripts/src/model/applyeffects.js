@@ -1,9 +1,8 @@
-/**
- * @fileOverview Web Audio effect chain constructors
- * @module applyEffects
- */
+// @fileOverview Web Audio effect chain constructors
+import esconsole from '../esconsole'
+import * as ESUtils from '../esutils'
 
-app.factory('applyEffects', ['ESUtils', function (ESUtils) {
+app.factory('applyEffects', function () {
     /********************* EFFECT OBJECTS *******************************/
     // Some effects are not available as native Webaudio nodes. We use the
     // existing audioNodes to create these desired effects
@@ -3045,4 +3044,4 @@ function LowpassCombFilter (context) {
         resetAudioNodeFlags: resetAudioNodeFlags,
         buildAudioNodeGraph: buildAudioNodeGraph
     }
-}]);
+});
