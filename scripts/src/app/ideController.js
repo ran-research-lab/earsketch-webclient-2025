@@ -4,13 +4,14 @@ import { setReady, dismissBubble } from "../bubble/bubbleState";
 import * as scripts from '../browser/scriptsState';
 import * as editor from '../editor/editorState';
 import * as tabs from '../editor/tabState';
+import * as userConsole from './userconsole'
 import * as WaveformCache from './waveformcache';
 
 /**
  * Angular controller for the IDE (text editor) and surrounding items.
  * @module ideController
  */
-app.controller("ideController", ['$rootScope', '$scope', '$uibModal', '$location', '$timeout', 'compiler', 'userProject', 'userConsole', 'userNotification', 'localStorage', 'reporter', 'caiAnalysisModule', 'colorTheme', 'collaboration', '$ngRedux', function ($rootScope, $scope, $uibModal, $location, $timeout, compiler, userProject, userConsole, userNotification, localStorage, reporter, caiAnalysisModule, colorTheme, collaboration, $ngRedux) {
+app.controller("ideController", ['$rootScope', '$scope', '$uibModal', '$location', '$timeout', 'compiler', 'userProject', 'userNotification', 'localStorage', 'reporter', 'caiAnalysisModule', 'colorTheme', 'collaboration', '$ngRedux', function ($rootScope, $scope, $uibModal, $location, $timeout, compiler, userProject, userNotification, localStorage, reporter, caiAnalysisModule, colorTheme, collaboration, $ngRedux) {
     $scope.callScriptBrowserFunction = function (fnName, tab) {
         $rootScope.$broadcast('manageScriptFromScriptContextMenu', fnName, tab);
     };
@@ -65,11 +66,10 @@ app.controller("ideController", ['$rootScope', '$scope', '$uibModal', '$location
     $scope.currentLanguage = localStorage.get('language', 'python');
     // $scope.useBlocks = false; // global option that persists even droplet cannot open because of code errors
 
-    // TODO: create and handle this in userConsole directive
-    $scope.$on('updateConsole', function () {
-        $scope.logs = userConsole.getLogs();
+    userConsole.callbacks.onUpdate = function () {
+        $scope.logs = userConsole.logs;
         $scope.$$phase || $scope.$digest();
-    });
+    };
 
     $scope.$on('compileembeddedTrack', function(){
         $scope.compileCode();

@@ -1,17 +1,18 @@
 import esconsole from '../esconsole'
 import * as ESUtils from '../esutils'
+import * as userConsole from './userconsole'
 
 app.controller("autograder3Controller",
-['$scope','compiler', 'userConsole','caiAnalysisModule', 'userProject',
-function($scope, compiler, userConsole, caiAnalysisModule, userProject) {
+['$scope','compiler', 'caiAnalysisModule', 'userProject',
+function($scope, compiler, caiAnalysisModule, userProject) {
 
     $scope.prompts = [0];
     $scope.allowPrompts = false;
     $scope.seed = Date.now();
     $scope.useSeed = true;
 
-    // overwrite userConsole javascript prompt with a hijackable one
-    var nativePrompt = userConsole.prompt;
+    // overwrite prompt with a hijackable one
+    var nativePrompt = window.esPrompt;
 
     $scope.hijackedPrompt = function() {
       var i = 0;
@@ -162,7 +163,7 @@ function($scope, compiler, userConsole, caiAnalysisModule, userProject) {
               }
             }
 
-            userConsole.prompt = $scope.hijackedPrompt();
+            window.esPrompt = $scope.hijackedPrompt();
 
           }
 
