@@ -5,10 +5,11 @@
  * @module renderer
  * @author Creston Bunch
  */
+import * as applyEffects from '../../model/applyeffects'
 import esconsole from '../../esconsole'
 import * as ESUtils from '../../esutils'
 
-app.factory('renderer', ['applyEffects', function rendererFactory(applyEffects) {
+app.factory('renderer', function () {
 
     var NUM_CHANNELS = 2;
     var SAMPLE_RATE = 44100;
@@ -44,11 +45,9 @@ app.factory('renderer', ['applyEffects', function rendererFactory(applyEffects) 
             // TODO: implement our custom analyzer node
             track.analyser = context.createGain();
 
-            // TODO: refactor applyeffects.js
-            applyEffects.resetAudioNodeFlags();
             var startNode = applyEffects.buildAudioNodeGraph(
                 context, track, i, result.tempo,
-                origin, result.master, [], 0
+                origin, result.master, [], false
             );
 
             var trackGain = context.createGain();
@@ -87,7 +86,7 @@ app.factory('renderer', ['applyEffects', function rendererFactory(applyEffects) 
                 // connect the buffer source to the effects tree
                 // if (typeof(startNode) !== "undefined")  {
                 //     source.connect(trackGain);
-                //     trackGain.connect(startNode.input)
+                //     trackGain.connect(startNode)
                 // } else {
                 //     source.connect(master);
                 //     trackGain.connect(master);
@@ -150,7 +149,7 @@ app.factory('renderer', ['applyEffects', function rendererFactory(applyEffects) 
 
                 if (typeof(startNode) !== "undefined") {
                     // TODO: the effect order (limiter) is not right
-                    trackGain.connect(startNode.input);
+                    trackGain.connect(startNode);
                 } else {
                     trackGain.connect(context.master);
                 }
@@ -159,7 +158,7 @@ app.factory('renderer', ['applyEffects', function rendererFactory(applyEffects) 
             } else {
                 if (typeof(startNode) !== "undefined") {
                     // track gain -> effect tree
-                    trackGain.connect(startNode.input)
+                    trackGain.connect(startNode)
                 } else {
                     // track gain -> (bypass effect tree) -> analyzer & master
                     trackGain.connect(track.analyser);
@@ -421,5 +420,4 @@ app.factory('renderer', ['applyEffects', function rendererFactory(applyEffects) 
         mergeClips: mergeClips
     };
 
-}]);
-
+});

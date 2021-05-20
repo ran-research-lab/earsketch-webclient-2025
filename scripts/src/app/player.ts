@@ -1,5 +1,8 @@
 // Play sounds from the JSON object output of scripts.
+import * as applyEffects from '../model/applyeffects'
+import { dbToFloat } from '../model/audioeffects'
 import esconsole from '../esconsole'
+import * as ESUtils from '../esutils'
 
 // Preliminary type declarations
 // TODO: Move some to compiler?
@@ -29,9 +32,11 @@ export interface EffectRange {
     endMeasure: number
     inputStartValue: number
     inputEndValue: number
+    startValue: number
+    endValue: number
 }
 
-export type Effect = EffectRange[] & {bypass?: boolean}
+export type Effect = EffectRange[] & { bypass?: boolean }
 
 export interface Track {
     clips: Clip[]
@@ -50,7 +55,9 @@ export interface DAWData {
     master: GainNode
 }
 
-export const Player = (context: AudioContext & {master: GainNode}, applyEffects: any, ESUtils: any) => {
+export type AudioContextWithGain = AudioContext & { master: GainNode }
+
+export const Player = (context: AudioContextWithGain) => {
     let isPlaying = false
 
     let waTimeStarted = 0
@@ -76,7 +83,7 @@ export const Player = (context: AudioContext & {master: GainNode}, applyEffects:
 
     let renderingDataQueue: (DAWData | null)[] = [null, null]
     let mutedTracks: number[] = []
-    let bypassedEffects: {[key: number]: string[]} = {}
+    let bypassedEffects: { [key: number]: string[] } = {}
 
     const reset = () => {
         esconsole('resetting', ['player', 'debug'])
@@ -200,8 +207,7 @@ export const Player = (context: AudioContext & {master: GainNode}, applyEffects:
             esconsole('Bypassing effects: ' + JSON.stringify(trackBypass), ['DEBUG','PLAYER'])
 
             // construct the effect graph
-            applyEffects.resetAudioNodeFlags()
-            const startNode = applyEffects.buildAudioNodeGraph(context, track, t, tempo, startTime, renderingData.master, trackBypass, 0)
+            const startNode = applyEffects.buildAudioNodeGraph(context, track, t, tempo, startTime, renderingData.master, trackBypass, false)
 
             const trackGain = context.createGain()
             trackGain.gain.setValueAtTime(1.0, context.currentTime)
@@ -219,7 +225,7 @@ export const Player = (context: AudioContext & {master: GainNode}, applyEffects:
                 // if there is at least one effect set in master track
                 if (typeof(startNode) !== "undefined") {
                     // TODO: master not connected to the analyzer?
-                    trackGain.connect(startNode.input)
+                    trackGain.connect(startNode)
                     // effect tree connects to the context.master internally
                 } else {
                     // if no effect set
@@ -230,7 +236,7 @@ export const Player = (context: AudioContext & {master: GainNode}, applyEffects:
             } else {
                 if (typeof(startNode) !== "undefined") {
                     // track gain -> effect tree
-                    trackGain.connect(startNode.input)
+                    trackGain.connect(startNode)
                 } else {
                     // track gain -> (bypass effect tree) -> analyzer & master
                     trackGain.connect(track.analyser)
@@ -244,7 +250,7 @@ export const Player = (context: AudioContext & {master: GainNode}, applyEffects:
                 const dummyOsc = context.createOscillator()
                 const dummyGain = context.createGain()
                 dummyGain.gain.value = 0
-                dummyOsc.connect(dummyGain).connect(startNode.input)
+                dummyOsc.connect(dummyGain).connect(startNode)
                 dummyOsc.start(startTime)
                 dummyOsc.stop(startTime+0.001)
             }
@@ -399,7 +405,7 @@ export const Player = (context: AudioContext & {master: GainNode}, applyEffects:
     const setVolume = (gain: number) => {
         esconsole('Setting context volume to ' + gain + 'dB', ['DEBUG','PLAYER'])
         if (context.master !== undefined) {
-            context.master.gain.setValueAtTime(applyEffects.dbToFloat(gain), context.currentTime)
+            context.master.gain.setValueAtTime(dbToFloat(gain), context.currentTime)
         }
     }
 
