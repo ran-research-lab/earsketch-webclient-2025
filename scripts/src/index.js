@@ -96,7 +96,6 @@ require(['angular'], () => {
     // app.component('rootComponent', react2angular(RootComponent));
 
     // In-house modules
-    require('audioContext');
     require('reporter');
     require('reader');
     require('userNotification');
@@ -107,7 +106,6 @@ require(['angular'], () => {
     require('collaboration');
     require('colorTheme');
     require('layout');
-    require('waveformCache');
     require('compiler');
     require('pitchShifter');
     require('userConsole');
