@@ -105,12 +105,10 @@ module.exports = {
             helpers: path.resolve(__dirname,`scripts/src/helpers.ts`),
 
             // ES API
-            ngWrappers: path.resolve(__dirname,`${apiDir}/angular-wrappers.js`),
             jsAPI: path.resolve(__dirname,`${apiDir}/earsketch.js.js`),
             pyAPI: path.resolve(__dirname,`${apiDir}/earsketch.py.js`),
 
             // Data
-            messages: path.resolve(__dirname,`${dataDir}/messages.js`),
             apiDoc: path.resolve(__dirname,`${dataDir}/api_doc.js`),
             
             // Curriculum Data
@@ -194,7 +192,7 @@ module.exports = {
             loader: 'exports-loader',
             options: {
                 type: 'commonjs',
-                exports: ['doCopy','resizeNavigationWidth','ValueError']
+                exports: ['doCopy','resizeNavigationWidth']
             }
         }, {
             test: path.resolve(__dirname,`${libDir}/dsp.js`),
@@ -242,12 +240,8 @@ module.exports = {
 
             // Data global variables
             EarSketch: 'exports-loader?type=commonjs&exports=single EarSketch!modules',
-            ESMessages: 'exports-loader?type=commonjs&exports=single ESMessages!messages',
             ESApiDoc: 'exports-loader?type=commonjs&exports=single ESApiDoc!apiDoc',
-            // ESCurr_TOC: 'exports-loader?type=commonjs&exports=single ESCurr_TOC!currToC',
-            // ESCurr_Pages: 'exports-loader?type=commonjs&exports=single ESCurr_Pages!currPages',
             ESNum_Slides: 'exports-loader?type=commonjs&exports=single ESNum_Slides!numSlides',
-            // ESCurr_SearchDoc: 'exports-loader?type=commonjs&exports=single ESCurr_SearchDoc!currSearchDoc',
             Question: 'exports-loader?type=commonjs&exports=single Question!currQuestions',
 
             AUDIOKEYS_NUMBERS: 'exports-loader?type=commonjs&exports=single AUDIOKEYS_NUMBERS!audiokeysNumbers',
