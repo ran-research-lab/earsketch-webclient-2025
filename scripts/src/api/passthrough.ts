@@ -6,6 +6,8 @@
 // promise, and use suspendPassthrough() in the Javascript and Python wrappers.
 
 import * as applyEffects from "../model/applyeffects"
+import audioContext from "../app/audiocontext"
+import * as audioLibrary from "../app/audiolibrary"
 import esconsole from "../esconsole"
 import * as renderer from "../app/renderer"
 import * as userConsole from "../app/userconsole"
@@ -475,7 +477,6 @@ export function analyze(result: DAWData, audioFile: string, featureForAnalysis: 
     }
 
     // load an angular service outside angular
-    const audioLibrary = ServiceWrapper().audioLibrary
     const compiler = ServiceWrapper().compiler
 
     const tempo = result.tempo
@@ -483,7 +484,7 @@ export function analyze(result: DAWData, audioFile: string, featureForAnalysis: 
 
 
     const blockSize = 2048; // TODO: hardcoded in analysis.js as well
-    const sampleRate = audioLibrary.getSampleRate ? audioLibrary.getSampleRate() : 44100
+    const sampleRate = audioContext.sampleRate
     if (audioFile in result.slicedClips) {
         const sliceLength_measure = result.slicedClips[audioFile].end - result.slicedClips[audioFile].start
         const sliceLength_samp = sliceLength_measure * 4 * (60.0/tempo) * sampleRate
@@ -542,11 +543,10 @@ export function analyzeForTime(result: DAWData, audioFile: string, featureForAna
     }
 
     // load an angular service outside angular
-    const audioLibrary = ServiceWrapper().audioLibrary
     const compiler = ServiceWrapper().compiler
 
     // Cannot do this assertion within the async promise chain
-    const sampleRate = audioLibrary.getSampleRate ? audioLibrary.getSampleRate() : 44100
+    const sampleRate = audioContext.sampleRate
     const startTimeInSamples = Math.round(sampleRate * measureToTime(startTime, result.tempo))
     const endTimeInSamples = Math.round(sampleRate * measureToTime(endTime, result.tempo))
     const blockSize = 2048; // TODO: hardcoded in analysis.js as well
@@ -670,11 +670,8 @@ export function analyzeTrackForTime(result: DAWData, trackNumber: number, featur
         )
     }
 
-    // load an angular service outside angular
-    const audioLibrary = ServiceWrapper().audioLibrary
-
     // Cannot do this assertion within the async promise chain
-    const sampleRate = audioLibrary.getSampleRate ? audioLibrary.getSampleRate() : 44100
+    const sampleRate = audioContext.sampleRate
     const startTimeInSamples = Math.round(sampleRate * measureToTime(startTime, result.tempo))
     const endTimeInSamples = Math.round(sampleRate * measureToTime(endTime, result.tempo))
     const blockSize = 2048; // TODO: hardcoded in analysis.js as well
@@ -729,9 +726,6 @@ export function dur(result: DAWData, fileKey: string) {
     const args = [...arguments].slice(1)
     ptCheckArgs("dur", args, 1, 1)
     ptCheckType("fileKey", "string", fileKey)
-
-    // load an angular service outside angular
-    const audioLibrary = ServiceWrapper().audioLibrary
 
     const q = result.quality
     return audioLibrary.getAudioClip(fileKey, result.tempo, q).then(
@@ -1359,7 +1353,13 @@ const ptCheckAudioSliceRange = (result: DAWData, fileKey: string, startTime: num
     if (startTime < 1) {
         throw new RangeError("Cannot start slice before the start of the clip")
     }
-    const clipDuration = dur(result, fileKey)
+    // TODO: This is broken, and has been for an unknown length of time.
+    // `dur` returns a promise, so `dur + 1` yields "[object Promise]1".
+    // Compared against a number (endTime), this always returns false,
+    // and the error never gets thrown.
+    // Instead the error gets caught in compiler's `sliceAudioBufferByMeasure`.
+    // (The brokenness was discovered via TypeScript migration of audiolibrary.)
+    const clipDuration = dur(result, fileKey) as unknown as number
     if (endTime > clipDuration + 1) {
         throw new RangeError("Cannot end slice after the end of the clip")
     }
