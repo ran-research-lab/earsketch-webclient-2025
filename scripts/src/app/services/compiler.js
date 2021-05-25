@@ -8,11 +8,12 @@ import audioContext from '../audiocontext'
 import * as audioLibrary from '../audiolibrary'
 import esconsole from '../../esconsole'
 import * as ESUtils from '../../esutils'
+import * as pitchshift from '../pitchshifter'
 import * as userConsole from '../userconsole'
 
 app.factory('compiler',
-['pitchshifter','$rootScope','$q',
-function compilerFactory(pitchshift,$rootScope,$q) {
+['$rootScope','$q',
+function compilerFactory($rootScope,$q) {
     let testRun = false;
 
     /**
@@ -109,7 +110,7 @@ function compilerFactory(pitchshift,$rootScope,$q) {
             var track = result.tracks[i];
 
             if (track.effects['PITCHSHIFT-PITCHSHIFT_SHIFT'] !== undefined) {
-                var p = pitchshift.asyncPitchshiftClips(track, result.tempo);
+                var p = pitchshift.pitchshiftClips(track, result.tempo);
 
                 promises.push(p);
                 p.then(function (track) {
