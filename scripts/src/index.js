@@ -32,12 +32,8 @@ ace.config.setModuleUrl("ace/mode/javascript_worker", jsWorkerUrl);
 import * as helpers from './helpers'
 import esconsole from './esconsole'
 import * as ESUtils from './esutils'
-import * as ES_PASSTHROUGH from './api/passthrough'
+// TODO: Remove this after dealing lib/earsketch-appdsp.js.
 import ESMessages from './data/messages'
-
-// TODO: Remove this after resolving issues with earsketch.py.js, earsketch.js.js.
-window.ES_PASSTHROUGH = ES_PASSTHROUGH
-
 window.ESMessages = ESMessages
 
 // TODO: Temporary workaround for autograders 1 & 3, which replace the prompt function.

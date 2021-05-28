@@ -1,6 +1,8 @@
 // Compile user scripts.
 import audioContext from "./audiocontext"
 import * as audioLibrary from "./audiolibrary"
+import setupJavascriptAPI, { remapToNativeJs } from "../api/earsketch.js"
+import setupPythonAPI from "../api/earsketch.py"
 import esconsole from "../esconsole"
 import ESMessages from "../data/messages"
 import * as ESUtils from "../esutils"
@@ -86,12 +88,18 @@ export function compilePython(code: string, quality: number) {
     return importPython(code, quality)
 }
 
+function runPythonCode(code: string) {
+    Sk.resetCompiler()
+    setupPythonAPI()
+    return Sk.importModuleInternal_("<stdin>", false, "__main__", code, undefined, false, true)
+}
+
 // Attempts evaluating and replacing undefined names with a placeholder until the actual evaluation later.
 // TODO: This probably does not need to be recursive.
 function recursiveNameCheckPY(code: string, undefinedNames: string[]): string[] {
     try {
         testRun = true
-        Sk.importMainWithBody("<stdin>", false, code, true)
+        runPythonCode(code)
     } catch (e) {
         if (e.tp$name && e.tp$name === "NameError") {
             const undefinedName = e.toString().split("'")[1]
@@ -135,15 +143,6 @@ async function handleUndefinedNamesPY(code: string) {
 // Python script (i.e., in the autograder.) For most use cases you should use
 // compilePython() instead and ignore this function.
 export async function importPython(code: string, quality: number) {
-    esconsole(`Loading EarSketch library from: ${SITE_BASE_URI}/scripts/src/api/earsketch.py.js`)
-
-    Sk.externalLibraries = {
-        // import EarSketch library into skulpt
-        earsketch : {
-            path: `${SITE_BASE_URI}/scripts/src/api/earsketch.py.js?v=${BUILD_NUM}&ext=.py.js`
-        }
-    }
-
     // special cases with these key functions when import ES module is missing
     // this hack is only for the user guidance
     Sk.builtins["init"] = new Sk.builtin.func(() => {
@@ -195,7 +194,7 @@ export async function importPython(code: string, quality: number) {
     esconsole("Compiling script using Skulpt.", ["debug", "compiler"])
     const mod = await Sk.misceval.asyncToPromise(() => {
         try {
-            return Sk.importModuleInternal_("<stdin>", false, "__main__", code, true)
+            return runPythonCode(code)
         } catch (err) {
             esconsole(err, ["error", "compiler"])
             throw err
@@ -262,7 +261,7 @@ async function handleUndefinedNamesJS(code: string, interpreter: any, tags: stri
 function createJsInterpreter(code: string, tags: string[], quality: number) {
     let interpreter
     try {
-        interpreter = new Interpreter(code, ES_JAVASCRIPT_API)
+        interpreter = new Interpreter(code, setupJavascriptAPI)
     } catch (e) {
         if (e.loc !== undefined) {
             // acorn provides line numbers for syntax errors
@@ -289,7 +288,8 @@ export async function compileJavascript(code: string, quality: number) {
     esconsole(ESUtils.formatScriptForTests(code), ["nolog", "compiler"])
 
     // A temporary switch for disabling the lazy evaluation of undefined names.
-    const escapeWords = /Math\.random|readInput|analyzeTrackForTime|analyzeTrack|analyzeForTime|analyze|dur/
+    // TODO: Update this if we remove `prompt`, which is currently an alias for `readInput` in the JS API.
+    const escapeWords = /Math\.random|readInput|prompt|analyzeTrackForTime|analyzeTrack|analyzeForTime|analyze|dur/
     const bypassOptimization = !FLAGS.LAZY_SCRIPT_COMPILER || escapeWords.test(code)
     esconsole("Using lazy name loading: " + !bypassOptimization, ["compiler", "debug"])
     const getTagsFn = bypassOptimization ? audioLibrary.getAllTags : audioLibrary.getDefaultTags
@@ -303,7 +303,7 @@ export async function compileJavascript(code: string, quality: number) {
     if (bypassOptimization) {
         let interpreter
         try {
-            interpreter = new Interpreter(code, ES_JAVASCRIPT_API)
+            interpreter = new Interpreter(code, setupJavascriptAPI)
         } catch (err) {
             if (err.loc !== undefined) {
                 // acorn provides line numbers for syntax errors
@@ -357,12 +357,12 @@ async function runJsInterpreter(interpreter: any) {
     while (interpreter.run()) {
         await sleep(200)
     }
-    if (interpreter.__ES_FINISHED !== undefined) {
-        esconsole("Compiling finished. Extracting result.", ["debug", "compiler"])
-        return interpreter.__ES_FINISHED
-    } else {
-        throw new EvalError("Missing call to finish() or something went wrong.")
+    const result = interpreter.getProperty(interpreter.scope, '__ES_RESULT')
+    if (result === undefined) {
+        throw new EvalError("Missing call to init() or something went wrong.")
     }
+    esconsole("Compiling finished. Extracting result.", ["debug", "compiler"])
+    return remapToNativeJs(result)
 }
 
 // Gets the current line number from the top of the JS-interpreter
