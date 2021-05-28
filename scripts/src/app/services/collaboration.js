@@ -7,8 +7,9 @@
 import esconsole from '../../esconsole';
 import * as scripts from '../../browser/scriptsState';
 import * as userNotification from '../userNotification';
+import * as websocket from '../websocket';
 
-app.service('collaboration', ['websocket', 'reporter', '$rootScope', '$ngRedux', function (websocket, reporter, $rootScope, $ngRedux) {
+app.service('collaboration', ['reporter', '$rootScope', '$ngRedux', function (reporter, $rootScope, $ngRedux) {
     var self = this;
     this.script = null; // script object: only used for the off-line mode
     this.scriptID = null; // collaboration session identity (both local and remote)
@@ -68,7 +69,7 @@ app.service('collaboration', ['websocket', 'reporter', '$rootScope', '$ngRedux',
     var syncTimeout = 5000; // when time out, the websocket connection is likely lost
 
     // websocket callbacks
-    function triggerByNotification(event, data) {
+    function triggerByNotification(data) {
         if (data.notification_type === 'collaboration') {
             switch (data.action) {
                 case 'joinedSession': {
