@@ -1,6 +1,7 @@
 import xml2js from 'xml2js';
 import * as appState from '../appState';
 import * as audioLibrary from '../audiolibrary';
+import * as collaboration from '../collaboration';
 import esconsole from '../../esconsole';
 import * as ESUtils from '../../esutils';
 import reporter from '../reporter';
@@ -9,7 +10,7 @@ import * as tabs from '../../editor/tabState';
 import * as userNotification from '../userNotification';
 import * as websocket from '../websocket';
 
-app.factory('userProject', ['$rootScope', '$http', '$window', '$q', 'localStorage', '$uibModal', 'collaboration', '$ngRedux', function ($rootScope, $http, $window, $q, localStorage, $uibModal, collaboration, $ngRedux) {
+app.factory('userProject', ['$rootScope', '$http', '$window', '$q', 'localStorage', '$uibModal', '$ngRedux', function ($rootScope, $http, $window, $q, localStorage, $uibModal, $ngRedux) {
     var self = {};
 
     var WSURLDOMAIN = URL_DOMAIN;
@@ -278,14 +279,14 @@ app.factory('userProject', ['$rootScope', '$http', '$window', '$q', 'localStorag
 
         //=================================================
         // register callbacks to the collaboration service
-        collaboration.refreshScriptBrowser = refreshCodeBrowser;
+        collaboration.callbacks.refreshScriptBrowser = refreshCodeBrowser;
         
-        collaboration.refreshSharedScriptBrowser = function () {
+        collaboration.callbacks.refreshSharedScriptBrowser = function () {
             // TODO: potential race condition with server-side script renaming operation?
             return getSharedScripts(username, password);
         };
 
-        collaboration.closeSharedScriptIfOpen = closeSharedScript;
+        collaboration.callbacks.closeSharedScriptIfOpen = closeSharedScript;
 
         //=================================================
         // register callbacks / member values in the userNotification service
