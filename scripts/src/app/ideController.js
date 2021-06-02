@@ -7,6 +7,7 @@ import * as scripts from '../browser/scriptsState';
 import * as editor from '../editor/editorState';
 import reporter from './reporter';
 import * as tabs from '../editor/tabState';
+import * as cai from '../cai/caiState';
 import * as userConsole from './userconsole'
 import * as userNotification from './userNotification';
 import * as WaveformCache from './waveformcache';
@@ -214,9 +215,6 @@ app.controller("ideController", ['$rootScope', '$scope', '$uibModal', '$location
         const activeScript = tabs.selectActiveTabScript($ngRedux.getState());
         $scope.editor.setReadOnly($scope.isEmbedded || activeScript?.readonly);
         colorTheme.load();
-
-        // Used in CAI
-        $rootScope.$broadcast("swapTabAfterIDEinit");
     };
 
     
@@ -587,8 +585,9 @@ app.controller("ideController", ['$rootScope', '$scope', '$uibModal', '$location
                     }
                     
                     console.log("autograder", report);
-
-                    $rootScope.$broadcast('compileCAI', [result, language, code]);
+                    if (FLAGS.SHOW_CAI) {
+                        $ngRedux.dispatch(cai.compileCAI([result, language, code]));
+                    }
                 }, 0);
             }
 

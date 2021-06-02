@@ -174,7 +174,7 @@ require(['angular'], () => {
     require('inputsController');
 
     // CAI
-    require('caiWindowDirective');
+    require('./cai/CAI');
     require('caiStudent');
     require('autograder');
     require('caiAnalysisModule');

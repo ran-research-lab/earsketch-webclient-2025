@@ -7,6 +7,7 @@ import * as ESUtils from '../../esutils';
 import reporter from '../reporter';
 import * as scriptsState from '../../browser/scriptsState';
 import * as tabs from '../../editor/tabState';
+import * as cai from '../../cai/caiState';
 import * as userNotification from '../userNotification';
 import * as websocket from '../websocket';
 
@@ -134,30 +135,30 @@ app.factory('userProject', ['$rootScope', '$http', '$window', '$q', 'localStorag
         }
     };
 
-    $window.onfocus = function() {
-        var t = Date.now();
-        $rootScope.$broadcast('userOnPage',t);
-        // console.log("on page");
-    };
+    if (FLAGS.SHOW_CAI) {
+        $window.onfocus = function() {
+            $ngRedux.dispatch(cai.userOnPage(Date.now()));
+        };
 
-    $window.onblur = function() {
-        var t = Date.now();
-        $rootScope.$broadcast('userOffPage',t);
-        // console.log("off page");        
-    };
+        $window.onblur = function() {
+            $ngRedux.dispatch(cai.userOnPage(Date.now()));
+        };
 
-    var mouse_x;
-    var mouse_y;
-    $window.addEventListener('mousemove', function (e) {
-        mouse_x = e.x;
-        mouse_y = e.y;
-    });   
+        var mouse_x;
+        var mouse_y;
 
-    $window.setInterval(function() {
-            $rootScope.$broadcast("mousePosition",mouse_x, mouse_y);
-            // console.log('x', e.x,'y', e.y); 
-            clearInterval();
+        $window.addEventListener('mousemove', function (e) {
+            mouse_x = e.x;
+            mouse_y = e.y;
+        });   
+
+        $window.setInterval(function() {
+            if (mouse_x && mouse_y) {
+                $ngRedux.dispatch(cai.mousePosition([mouse_x, mouse_y]));
+                clearInterval();
+            }
         }, 5000);
+    }
 
     function loadLocalScripts() {
         // Load scripts from local storage if they are available. When a user logs
@@ -384,7 +385,9 @@ app.factory('userProject', ['$rootScope', '$http', '$window', '$q', 'localStorag
             $rootScope.$broadcast('clearRecommender');
 
             // Close CAI
-            $rootScope.$broadcast('caiClose');
+            if (FLAGS.SHOW_CAI) {
+                $ngRedux.dispatch(cai.resetState());
+            }
 
             // Copy scripts local storage to the web service.
             if (localStorage.checkKey(LS_SCRIPTS_KEY)) {
@@ -810,7 +813,9 @@ app.factory('userProject', ['$rootScope', '$http', '$window', '$q', 'localStorag
         $rootScope.$broadcast('clearRecommender');
 
         // Close CAI
-        $rootScope.$broadcast('caiClose');
+        if (FLAGS.SHOW_CAI) {
+            $ngRedux.dispatch(cai.resetState());
+        }
 
         websocket.disconnect();
     }
