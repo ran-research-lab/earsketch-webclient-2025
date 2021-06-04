@@ -1,13 +1,16 @@
-﻿import { CAI_TREE_NODES, CAI_TREES, CAI_ERRORS } from 'caiTree';
-import { current } from 'immer';
-/**
+﻿/**
  * Analysis module for CAI (Co-creative Artificial Intelligence) Project.
  *
  * @author Erin Truesdell, Jason Smith
  */
+import * as caiErrorHandling from "../../cai/errorHandling"
+import * as caiStudentPreferenceModule from "../../cai/studentPreferences"
+import * as caiProjectModel from "../../cai/projectModel"
+import { CAI_TREE_NODES, CAI_TREES, CAI_ERRORS } from 'caiTree'
+import * as recommender from '../recommender'
 import * as userProject from '../userProject'
 
-app.factory('caiDialogue', ['codeSuggestion', 'caiErrorHandling', 'recommender', 'caiStudentPreferenceModule', 'caiStudentHistoryModule', 'caiProjectModel', function (codeSuggestion, caiErrorHandling, recommender, caiStudentPreferenceModule, caiStudentHistoryModule, caiProjectModel) {
+app.factory('caiDialogue', ['codeSuggestion', 'caiStudentHistoryModule', function (codeSuggestion, caiStudentHistoryModule) {
     var currentInput = {};
     var currentParameters = {};
     var currentTreeNode = {};
@@ -478,7 +481,7 @@ app.factory('caiDialogue', ['codeSuggestion', 'caiErrorHandling', 'recommender',
                 if (model[keys[j]].length < options.length) {
                     var newNode = Object.assign({}, templateNode);
                     newNode["id"] = tempID;
-                    newNode["title"] = caiProjectModel.propertyButtons[keys[j]];
+                    newNode["title"] = caiProjectModel.getPropertyButtons()[keys[j]];
                     newNode["parameters"] = { property: keys[j] };
                     caiTree.push(newNode);
                     buttons.push({ label: newNode.title, value: newNode.id });

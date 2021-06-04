@@ -1,13 +1,13 @@
-﻿//import { CAI_TREE_NODES, CAI_TREES, CAI_ERRORS} from 'caiTree';
-/**
+﻿/**
  * Analysis module for CAI (Co-creative Artificial Intelligence) Project.
  *
  * @author Erin Truesdell, Jason Smith
  */
+import * as caiStudent from "../../cai/student"
+import * as caiStudentPreferenceModule from "../../cai/studentPreferences"
 import * as userProject from '../userProject'
 
-app.factory('caiStudentHistoryModule', ['complexityCalculator', 'caiStudent', 'caiStudentPreferenceModule', function (complexityCalculator, caiStudent, caiStudentPreferenceModule) {
-
+app.factory('caiStudentHistoryModule', ['complexityCalculator', function (complexityCalculator) {
     var aggregateScore;
     var curriculumPagesViewed;
     var codeRequests = 0;

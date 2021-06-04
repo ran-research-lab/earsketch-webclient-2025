@@ -6,7 +6,8 @@
  * @module complexityCalculator
  * @author Creston Bunch, Erin Truesdell
  */
-app.factory('complexityCalculator', ['complexityCalculatorHelperFunctions', "caiErrorHandling", function complexityCalculator(complexityCalculatorHelperFunctions, caiErrorHandling) {
+
+app.factory('complexityCalculator', ['complexityCalculatorHelperFunctions', function complexityCalculator(complexityCalculatorHelperFunctions) {
 
     //variable init
     // var studentCode;

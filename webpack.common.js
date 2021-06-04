@@ -68,7 +68,6 @@ module.exports = {
             downloadController: path.resolve(__dirname,`${appDir}/downloadController.js`),
             renameController: path.resolve(__dirname,`${appDir}/renameController.js`),
             chatWindowDirective: path.resolve(__dirname,`${appDir}/chatWindowDirective.js`),
-            caiWindowDirective: path.resolve(__dirname,`${appDir}/caiWindowDirective.js`),
             createScriptController: path.resolve(__dirname,`${appDir}/createScriptController.js`),
             promptController: path.resolve(__dirname,`${appDir}/promptController.js`),
             autograderController: path.resolve(__dirname,`${appDir}/autograderController.js`),
@@ -91,7 +90,6 @@ module.exports = {
             // Recommendation JSON/js file
             numbersAudiokeys: path.resolve(__dirname,`${dataDir}/numbers_audiokeys.js`),
             audiokeysRecommendations: path.resolve(__dirname,`${dataDir}/audiokeys_recommendations.js`),
-            recommender: path.resolve(__dirname,`${servicesDir}/recommender.js`),
 
             // CAI
             complexityCalculator: path.resolve(__dirname,`${servicesDir}/complexityCalculator.js`),
@@ -102,16 +100,10 @@ module.exports = {
 
             caiDialogue: path.resolve(__dirname,`${servicesDir}/caiDialogue.js`),
             caiTree: path.resolve(__dirname,`${dataDir}/caitree.js`),
-            caiErrorHandling: path.resolve(__dirname,`${servicesDir}/caiErrorHandling.js`),
             codeSuggestion: path.resolve(__dirname,`${servicesDir}/codeSuggestion.js`),
             codeRecommendations: path.resolve(__dirname,`${dataDir}/codeRecommendations.js`),
 
             caiStudentHistoryModule: path.resolve(__dirname, `${servicesDir}/caiStudentHistoryModule.js`),
-            caiStudentPreferenceModule: path.resolve(__dirname, `${servicesDir}/caiStudentPreferenceModule.js`),
-            caiStudent: path.resolve(__dirname, `${servicesDir}/caiStudent.js`),
-
-            caiProjectModel: path.resolve(__dirname, `${servicesDir}/caiProjectModel.js`)
-
         }
     },
     module: {

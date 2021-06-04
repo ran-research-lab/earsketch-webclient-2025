@@ -4,11 +4,13 @@
  * @author Jason Smith
  */
 import * as audioLibrary from '../audiolibrary';
+import * as caiStudent from '../../cai/student';
 import esconsole from '../../esconsole';
 import {NUMBERS_AUDIOKEYS} from 'numbersAudiokeys';
 import {AUDIOKEYS_RECOMMENDATIONS} from 'audiokeysRecommendations';
+import * as recommender from '../recommender';
 
-app.factory('caiAnalysisModule', ['complexityCalculator', 'recommender', "caiStudent", function (complexityCalculator, recommender, caiStudent) {
+app.factory('caiAnalysisModule', ['complexityCalculator', function (complexityCalculator) {
 
   var librarySounds = [];
   var librarySoundGenres = [];
