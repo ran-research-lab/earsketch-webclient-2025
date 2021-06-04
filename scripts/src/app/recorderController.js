@@ -1,4 +1,6 @@
-app.directive('levelMeter', ['RecorderService', function (RecorderService) {
+import * as RecorderService from "./esrecorder"
+
+app.directive('levelMeter', function () {
     return {
         restrict: 'E',
         link: function (scope, elem) {
@@ -89,7 +91,7 @@ app.directive('levelMeter', ['RecorderService', function (RecorderService) {
             }
         }
     };
-}]);
+});
 
 app.directive('visualMetronome', function () {
     return {
@@ -112,7 +114,7 @@ app.directive('visualMetronome', function () {
                 }
             });
 
-            scope.$on('clickOnMetronome', function (event,val) {
+            RecorderService.callbacks.clickOnMetronome = function (val) {
                 if (showMetronome) {
                     switch (val) {
                         case 0:
@@ -129,12 +131,12 @@ app.directive('visualMetronome', function () {
                             break;
                     }
                 }
-            });
+            };
         }
     }
 });
 
-app.directive('drawWaveform', ['RecorderService', function (RecorderService) {
+app.directive('drawWaveform', function () {
     return {
         restrict: 'E',
         link: function (scope, elem) {
@@ -157,24 +159,24 @@ app.directive('drawWaveform', ['RecorderService', function (RecorderService) {
 
             ctx.clearRect(0, 0, w, h);
 
-            scope.$on('showSpectrogram', function () {
+            RecorderService.callbacks.showSpectrogram = function () {
                 if (!rafId) {
                     drawSpectrogram();
                 }
-            });
+            };
 
-            scope.$on('showRecordedWaveform', function () {
+            RecorderService.callbacks.showRecordedWaveform = function () {
                 if (rafId) {
                     window.cancelAnimationFrame(rafId);
                     rafId = undefined;
                 }
 
-                if (RecorderService.properties.buffer) {
-                    drawWaveform(RecorderService.properties.buffer.getChannelData(0));
+                if (RecorderService.buffer) {
+                    drawWaveform(RecorderService.buffer.getChannelData(0));
                 } else {
                     drawWaveform(new Float32Array(0));
                 }
-            });
+            };
 
             function drawWaveform(buf) {
                 var step = Math.ceil(buf.length / w);
@@ -226,4 +228,4 @@ app.directive('drawWaveform', ['RecorderService', function (RecorderService) {
             }
         }
     };
-}]);
+});
