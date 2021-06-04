@@ -13,21 +13,17 @@ interface Notification {
     script_name?: string
     shareid?: string
     id?: string
-    created?: number
+    created?: string
 }
 
 // TODO: separate the temporary and permanent notification services?
-export const queue = []
 export let history: Notification[] = []
 
 export const user = { role: "", loginTime: Date.now() }
 
 export const callbacks = {
-    show: (text: string, type: string="") => {},
-    hide: () => {},
+    show: (text: string, type: string="", duration?: number) => {},
     popup: (text: string, type: string="", duration: number | undefined=undefined) => {},
-
-    hidePopup: () => {},
     addSharedScript: (shareID: string, id: string) => {},
 }
 
@@ -35,8 +31,6 @@ export const state = {
     // TODO: Why is this here?
     isInLoadingScreen: false,
 }
-
-export const popupQueue = []
 
 export const show = (text: string, type: string="", duration: number | undefined=undefined) => {
     // check type for registering to the notification history
@@ -82,9 +76,6 @@ export const show = (text: string, type: string="", duration: number | undefined
 }
 
 export const showBanner = (text: string, type: string="") => callbacks.show(text, type)
-
-export const hide = () => callbacks.hide()
-export const hidePopup = () => callbacks.hidePopup()
 
 // Only show the latest broadcast on the client side.
 const truncateBroadcast = () => {
@@ -149,7 +140,7 @@ export const loadHistory = (notificationList: Notification[]) => {
             v.message.text = '[Teacher] ' + v.message.text
         }
 
-        v.time = v.created!
+        v.time = Date.parse(v.created!)
 
         // hack around only receiving notification history (collection) but not individual messages
         // TODO: always send individual notification from server
