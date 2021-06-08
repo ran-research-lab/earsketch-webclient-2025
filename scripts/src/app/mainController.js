@@ -17,18 +17,15 @@ import * as curriculum from '../browser/curriculumState';
 import * as layout from '../layout/layoutState';
 import * as Layout from '../layout/Layout';
 import * as cai from '../cai/caiState';
+import { wrapModal } from '../helpers';
 import * as recommender from './recommender';
+import { ScriptAnalysis } from './ScriptAnalysis';
 import * as userNotification from './userNotification';
 import * as userProject from './userProject';
 
 // Temporary glue from $uibModal to React components.
-import { react2angular } from "react2angular"
-
-function wrapModal(component) {
-    return ({ modalInstance, ...props }) => component({ close: modalInstance.close, ...props })
-}
-
-app.component("forgotpasswordController", react2angular(wrapModal(ForgotPassword), ["modalInstance"]))
+app.component("forgotpasswordController", wrapModal(ForgotPassword))
+app.component("analyzeScriptController", wrapModal(ScriptAnalysis))
 
 /**
  * @module mainController
@@ -929,8 +926,7 @@ app.controller("mainController", ['$rootScope', '$scope', '$http', '$uibModal', 
 
     $scope.openCodeIndicator = script => {
         $uibModal.open({
-            templateUrl: 'templates/script-analysis.html',
-            controller: 'analyzeScriptController',
+            component: 'analyzeScriptController',
             size: 100,
             resolve: {
                 script() { return script; }
