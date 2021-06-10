@@ -27,6 +27,7 @@ import { ScriptAnalysis } from './ScriptAnalysis';
 import { ScriptHistory } from './ScriptHistory';
 import * as userNotification from './userNotification';
 import * as userProject from './userProject';
+import i18n from "i18next";
 
 // Temporary glue from $uibModal to React components.
 app.component("forgotpasswordController", wrapModal(ForgotPassword))
@@ -365,7 +366,7 @@ app.controller("mainController", ['$rootScope', '$scope', '$http', '$uibModal', 
 
                     if (userInfo.role === 'teacher') {
                         if (userInfo.firstname === '' || userInfo.lastname === '' || userInfo.email === '') {
-                            userNotification.show(ESMessages.user.teachersLink, 'editProfile');
+                            userNotification.show(i18n.t('messages:user.teachersLink'), 'editProfile');
                         }
                     }
                 } else {
@@ -444,7 +445,7 @@ app.controller("mainController", ['$rootScope', '$scope', '$http', '$uibModal', 
         // save all unsaved open scripts
         userProject.saveAll().then(function () {
             if (userProject.openScripts.length > 0) {
-                userNotification.show(ESMessages.user.allscriptscloud);
+                userNotification.show(i18n.t('messages:user.allscriptscloud'));
             }
 
             const activeTabID = tabs.selectActiveTabID($ngRedux.getState());
@@ -494,7 +495,7 @@ app.controller("mainController", ['$rootScope', '$scope', '$http', '$uibModal', 
         userProject.getUserInfo().then(function (userInfo) {
             if (userInfo.hasOwnProperty('role') && (userInfo.role === 'teacher' || userInfo.role === 'admin')) {
                 if (userInfo.firstname === '' || userInfo.lastname === '' || userInfo.email === '') {
-                    userNotification.show(ESMessages.user.teachersLink, 'editProfile');
+                    userNotification.show(i18n.t('messages:user.teachersLink'), 'editProfile');
                 } else {
                     var url = URL_DOMAIN + '/services/scripts/getlmsloginurl';
                     var payload = new FormData();
@@ -520,11 +521,11 @@ app.controller("mainController", ['$rootScope', '$scope', '$http', '$uibModal', 
                         if (result.data.hasOwnProperty('loginurl')) {
                             lmsWindow.location = result.data.loginurl;
                         } else if (result.data.hasOwnProperty('debuginfo')) {
-                            message = ESMessages.user.teacherSiteLoginError + result.data.debuginfo + ESMessages.user.promptFixAtTeacherSite;
+                            message = i18n.t('messages:user.teacherSiteLoginError') + result.data.debuginfo + i18n.t('messages:user.promptFixAtTeacherSite');
                             userNotification.show(message, 'editProfile');
                             lmsWindow.location = homepage;
                         } else {
-                            message = ESMessages.user.teacherSiteLoginError + 'Opening the home page without logging in..' + ESMessages.user.promptFixAtTeacherSite;
+                            message = i18n.t('messages:user.teacherSiteLoginError') + 'Opening the home page without logging in..' + i18n.t('messages:user.promptFixAtTeacherSite');
                             userNotification.show(message, 'editProfile');
                             lmsWindow.location = result.data.loginurl;
                         }
@@ -533,7 +534,7 @@ app.controller("mainController", ['$rootScope', '$scope', '$http', '$uibModal', 
                     });
                 }
             } else {
-                userNotification.show(ESMessages.user.teachersPageNoAccess, 'failure1');
+                userNotification.show(i18n.t('messages:user.teachersPageNoAccess'), 'failure1');
             }
         });
     };
@@ -868,7 +869,7 @@ app.controller("mainController", ['$rootScope', '$scope', '$http', '$uibModal', 
     $scope.copyScript = script => {
         userProject.saveScript(script.name, script.source_code, false)
             .then(() => {
-                userNotification.show(ESMessages.user.scriptcopied);
+                userNotification.show(i18n.t('messages:user.scriptcopied'));
                 $ngRedux.dispatch(scripts.syncToNgUserProject());
             });
     };
@@ -1065,7 +1066,7 @@ app.controller("mainController", ['$rootScope', '$scope', '$http', '$uibModal', 
     $scope.closeAllTabs = () => {
         $confirm({text: ESMessages.idecontroller.closealltabs, ok: "Close All"}).then(() => {
             userProject.saveAll().then(() => {
-                userNotification.show(ESMessages.user.allscriptscloud);
+                userNotification.show(i18n.t('messages:user.allscriptscloud'));
                 $ngRedux.dispatch(tabs.closeAllTabs());
             }).catch(() => userNotification.show(ESMessages.idecontroller.saveallfailed, 'failure1'));
 

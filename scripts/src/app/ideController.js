@@ -15,6 +15,7 @@ import * as userConsole from './userconsole'
 import * as userNotification from './userNotification';
 import * as userProject from './userProject';
 import * as WaveformCache from './waveformcache';
+import i18n from "i18next";
 
 // Temporary glue from $uibModal to React components.
 app.component("createScriptController", wrapModal(ScriptCreator))
@@ -556,7 +557,7 @@ app.controller("ideController", ['$rootScope', '$scope', '$uibModal', '$location
 
             reporter.compile(language, true, undefined, duration);
 
-            userNotification.showBanner(ESMessages.interpreter.runSuccess, 'success');
+            userNotification.showBanner(i18n.t('messages:interpreter.runSuccess'), 'success');
 
             $scope.saveActiveScriptWithRunStatus(userProject.STATUS_SUCCESSFUL);
 
@@ -621,7 +622,7 @@ app.controller("ideController", ['$rootScope', '$scope', '$uibModal', '$location
             var errType = String(err).split(":")[0];
             reporter.compile(language, false, errType, duration);
 
-            userNotification.showBanner(ESMessages.interpreter.runFailed, 'failure1');
+            userNotification.showBanner(i18n.t('messages:interpreter.runFailed'), 'failure1');
 
             $scope.saveActiveScriptWithRunStatus(userProject.STATUS_UNSUCCESSFUL);
 
@@ -1003,7 +1004,7 @@ app.controller('DownloadTeacherMaterialsCtrl', ['$scope', '$http', '$uibModalIns
      */
     $scope.download = function () {
         if ($scope.keypass === "") {
-            $scope.error = ESMessages.downloadprotecteddata.nopassword;
+            $scope.error = i18n.t('messages:downloadprotecteddata.nopassword');
             return;
         }
 
@@ -1015,7 +1016,7 @@ app.controller('DownloadTeacherMaterialsCtrl', ['$scope', '$http', '$uibModalIns
         request.timeout = 10000;
 
         request.ontimeout = function () {
-            $scope.error = ESMessages.downloadprotecteddata.servertimeout;
+            $scope.error = i18n.t('messages:downloadprotecteddata.servertimeout');
             esconsole('Timeout while requesting teacher materials from server.', 'error');
         };
 
@@ -1033,7 +1034,7 @@ app.controller('DownloadTeacherMaterialsCtrl', ['$scope', '$http', '$uibModalIns
                         $uibModalInstance.close();
                         return;
                     } else {
-                        $scope.error = ESMessages.downloadprotecteddata.servertimeout;
+                        $scope.error = i18n.t('messages:downloadprotecteddata.servertimeout');
                     }
                 } else if (request.status === 403){
                     $scope.error = "Incorrect password.";
@@ -1042,7 +1043,7 @@ app.controller('DownloadTeacherMaterialsCtrl', ['$scope', '$http', '$uibModalIns
                 }
             }
             esconsole('Error in download teacher materials: STATUS '+ request.status, 'error');
-            $scope.error = ESMessages.downloadprotecteddata.unexpectederror;
+            $scope.error = i18n.t('messages:downloadprotecteddata.unexpectederror');
             $scope.$apply();
         };
 
