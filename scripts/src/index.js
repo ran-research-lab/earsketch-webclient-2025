@@ -36,9 +36,6 @@ import { Editor } from './editor/Editor'
 import esconsole from './esconsole'
 import * as ESUtils from './esutils'
 import reporter from './app/reporter'
-// TODO: Remove this after dealing lib/earsketch-appdsp.js.
-import ESMessages from './data/messages'
-window.ESMessages = ESMessages
 // TODO: Remove this after making complexityCalculator a module instead of a service.
 import * as caiErrorHandling from './cai/errorHandling'
 window.caiErrorHandling = caiErrorHandling

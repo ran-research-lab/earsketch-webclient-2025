@@ -15,7 +15,6 @@ import * as tabs from "../editor/tabState"
 import * as userNotification from "./userNotification"
 import * as websocket from "./websocket"
 import { ScriptEntity } from "common"
-import ESMessages from "../data/messages"
 import i18n from "i18next"
 
 const USER_STATE_KEY = "userstate"
@@ -299,7 +298,7 @@ export async function login(username: string, password: string) {
     // used for managing websocket notifications locally
     userNotification.user.loginTime = Date.now()
 
-    esconsole(i18n.t('messages:user.scriptsuccess'), ["debug", "user"])
+    esconsole('List of scripts in Load script list successfully updated.', ["debug", "user"])
     const storedScripts = extractScripts(data)
     resetScripts()
 
@@ -683,7 +682,7 @@ export async function importScript(script: ScriptEntity) {
             imported.name = script.name
             return Promise.resolve(imported)
         } else {
-            throw ESMessages.general.unauthenticated
+            throw i18n.t('messages:general.unauthenticated')
         }
     } else {
         // The user is importing a read-only script (e.g. from the curriculum).
