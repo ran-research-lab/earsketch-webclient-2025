@@ -18,6 +18,9 @@ import * as daw from './dawState'
 // Width of track control box
 const X_OFFSET = 100
 
+// Hack because local state gets cleared when the DAW is replaced by a loading screen...
+let _embedCompiled = false
+
 const Header = ({ playPosition, setPlayPosition }: { playPosition: number, setPlayPosition: (a: number) => void}) => {
     const dispatch = useDispatch()
     const playLength = useSelector(daw.selectPlayLength)
@@ -31,7 +34,8 @@ const Header = ({ playPosition, setPlayPosition }: { playPosition: number, setPl
     const loop = useSelector(daw.selectLoop)
     const autoScroll = useSelector(daw.selectAutoScroll)
     const embedMode = useSelector(appState.selectEmbedMode)
-    const [needCompile, setNeedCompile] = useState(embedMode)
+    const [embedCompiled, setEmbedCompiled] = useState(_embedCompiled)
+    const needCompile = embedMode && !embedCompiled
 
     const playbackStartedCallback = () => {
         dispatch(daw.setPlaying(true))
@@ -50,10 +54,11 @@ const Header = ({ playPosition, setPlayPosition }: { playPosition: number, setPl
             dispatch(setReady(true))
         }
 
-        // TODO: Update after relevant components get ported.
-        if (needCompile) {
+        // In embedded mode, play button doubles as run button.
+        if (embedMode && !embedCompiled) {
             compileCode()
-            setNeedCompile(false)
+            setEmbedCompiled(true)
+            _embedCompiled = true
             return
         }
 
@@ -168,7 +173,7 @@ const Header = ({ playPosition, setPlayPosition }: { playPosition: number, setPl
                 </button>
             </span>
 
-            <span id="daw-play-button" uib-popover-html="getPopoverContent('play')" popover-placement="bottom" popover-is-open="showDAWKeyShortcuts" popover-animation="true" popover-trigger="'none'">
+            <span id="daw-play-button">
                 {/* Play */}
                 {!playing && <span className="daw-transport-button">
                     <button type="submit" className={"btn hover:opacity-70 text-green-500" + (needCompile ? " flashButton" : "")} title="Play" onClick={play}>

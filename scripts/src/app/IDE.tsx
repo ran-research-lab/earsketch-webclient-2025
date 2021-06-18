@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react"
-import { Provider, useSelector } from "react-redux"
+import { Provider, useDispatch, useSelector } from "react-redux"
 
 import * as appState from "../app/appState"
 import { Browser } from "../browser/Browser"
@@ -8,6 +8,7 @@ import { CAI } from "../cai/CAI"
 import * as collaboration from "./collaboration"
 import * as compiler from "./compiler"
 import { Curriculum } from "../browser/Curriculum"
+import * as curriculum from "../browser/curriculumState"
 import { DAW } from "../daw/DAW"
 import { Editor } from "../editor/Editor"
 import { EditorHeader } from "../editor/EditorHeader"
@@ -17,6 +18,7 @@ import { setReady, dismissBubble } from "../bubble/bubbleState"
 import * as scripts from "../browser/scriptsState"
 import * as editor from "../editor/Editor"
 import * as editorState from "../editor/editorState"
+import * as layout from "../layout/layoutState"
 import * as Layout from "../layout/Layout"
 import reporter from "./reporter"
 import * as tabs from "../editor/tabState"
@@ -151,6 +153,12 @@ export function initEditor() {
     editor.setReadOnly(store.getState().app.embedMode || activeScript?.readonly)
 }
 
+function embeddedScriptLoaded(username: string, scriptName: string, shareid: string) {
+    store.dispatch(appState.setEmbeddedScriptUsername(username))
+    store.dispatch(appState.setEmbeddedScriptName(scriptName))
+    store.dispatch(appState.setEmbeddedShareID(shareid))
+}
+
 export async function openShare(shareid: string) {
     const isEmbedded = store.getState().app.embedMode
 
@@ -164,7 +172,7 @@ export async function openShare(shareid: string) {
             // user has already opened this shared link before
             if (userProject.isLoggedIn()) {
                 await userProject.getSharedScripts()
-                if (isEmbedded) helpers.getNgRootScope().$broadcast("embeddedScriptLoaded", {scriptName: result.name, username: result.username, shareid: result.shareid})
+                if (isEmbedded) embeddedScriptLoaded(result.username, result.name, result.shareid)
                 userProject.openSharedScript(result.shareid)
             }
             switchToShareMode()
@@ -176,9 +184,7 @@ export async function openShare(shareid: string) {
 
             // user has not opened this shared link before
             result = await userProject.loadScript(shareid, true) as ScriptEntity
-            if (isEmbedded) {
-                helpers.getNgRootScope().$broadcast("embeddedScriptLoaded", {scriptName: result.name, username: result.username, shareid: result.shareid})
-            }
+            if (isEmbedded) embeddedScriptLoaded(result.username, result.name, result.shareid)
 
             if (result.username !== userProject.getUsername()) {
                 // the shared script doesn't belong to the logged-in user
@@ -213,7 +219,7 @@ export async function openShare(shareid: string) {
     } else {
         // User is not logged in
         const result = await userProject.loadScript(shareid, true)
-        if (isEmbedded) helpers.getNgRootScope().$broadcast("embeddedScriptLoaded", { scriptName: result.name, username: result.username, shareid: result.shareid })
+        if (isEmbedded) embeddedScriptLoaded(result.username, result.name, result.shareid)
         await userProject.saveSharedScript(shareid, result.name, result.source_code, result.username)
         userProject.openSharedScript(result.shareid)
         switchToShareMode()
@@ -346,6 +352,7 @@ export function compileCode() {
 }
 
 const IDE = () => {
+    const dispatch = useDispatch()
     const language = useSelector(appState.selectScriptLanguage)
     const numTabs = useSelector(tabs.selectOpenTabs).length
 
@@ -357,13 +364,15 @@ const IDE = () => {
     const bubbleActive = useSelector(bubble.selectActive)
     const bubblePage = useSelector(bubble.selectCurrentPage)
 
+    const showCAI = useSelector(layout.selectEastKind) === "CAI" && FLAGS.SHOW_CAI
+
     const [loading, _setLoading] = useState(false)
     setLoading = _setLoading
 
     useEffect(() => Layout.initialize(), [])
 
-    return <div id="main-container" style={embedMode ? { top: "0", left: "0" } : {}}>
-        <div className="h-full">
+    return <div id="main-container" className="flex-grow flex flex-row h-full overflow-hidden" style={embedMode ? { top: "0", left: "0" } : {}}>
+        <div className="w-full h-full">
             <div id="layout-container" className="split flex flex-row h-full">
                 <div id="sidebar-container" style={{ zIndex: bubbleActive && [5,6,7,9].includes(bubblePage) ? 35 : 0 }}>
                     <div className="overflow-hidden" id="sidebar"> {/* re:overflow, split.js width calculation can cause the width to spill over the parent width */}
@@ -419,7 +428,7 @@ const IDE = () => {
                                     <span className={"console-" + msg.level.replace("status", "info")}>
                                         {msg.text}
                                         {msg.level === "error" &&
-                                        <a className="cursor-pointer" onClick={() => helpers.getNgRootScope().loadChapterForError(msg.text)}>
+                                        <a className="cursor-pointer" onClick={() => dispatch(curriculum.fetchContent(curriculum.getChapterForError(msg.text)))}>
                                             Click here for more information.
                                         </a>}
                                     </span>
@@ -430,7 +439,7 @@ const IDE = () => {
                 </div>
 
                 <div className="h-full" id="curriculum-container" style={{ zIndex: bubbleActive && [8,9].includes(bubblePage) ? 35 : 0 }}>
-                    {helpers.getNgMainController().scope().showCAIWindow
+                    {showCAI
                     ? <CAI />
                     : <Curriculum />}
                     {/* NOTE: The chat window might come back here at some point. */}

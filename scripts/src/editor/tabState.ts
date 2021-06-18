@@ -4,9 +4,9 @@ import { persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import * as ace from 'ace-builds';
 
+import { reloadRecommendations } from '../app/App';
 import * as app from '../app/appState';
 import * as collaboration from '../app/collaboration';
-import * as helpers from '../helpers';
 import * as scripts from '../browser/scriptsState';
 import * as user from '../user/userState';
 import * as editor from "./editorState";
@@ -177,8 +177,7 @@ export const setActiveTabAndEditor = createAsyncThunk<void, string, ThunkAPI>(
 
         prevTabID && (scriptID !== prevTabID) && dispatch(ensureCollabScriptIsClosed(prevTabID));
         scriptID && dispatch(openAndActivateTab(scriptID));
-        
-        helpers.getNgRootScope().$broadcast('reloadRecommendations');
+        reloadRecommendations();
     }
 );
 
@@ -267,8 +266,7 @@ const ensureCollabScriptIsClosed = createAsyncThunk<void, string, ThunkAPI>(
         const activeTabID = selectActiveTabID(getState());
         const script = scripts.selectAllScriptEntities(getState())[scriptID];
         if (scriptID === activeTabID && script?.collaborative) {
-            const userName = user.selectUserName(getState())!;
-            collaboration.closeScript(scriptID, userName);
+            collaboration.closeScript(scriptID);
         }
     }
 );

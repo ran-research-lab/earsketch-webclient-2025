@@ -3,12 +3,12 @@ import i18n from "i18next"
 import { useSelector } from "react-redux"
 import React, { useEffect, useRef } from "react"
 
+import { importScript, reloadRecommendations } from "../app/App"
 import * as appState from "../app/appState"
 import * as cai from "../cai/caiState"
 import * as collaboration from "../app/collaboration"
 import * as config from "./editorConfig"
 import * as editor from "./editorState"
-import * as helpers from "../helpers"
 import { initEditor } from "../app/IDE"
 import * as tabs from "./tabState"
 import * as userConsole from "../app/userconsole"
@@ -177,7 +177,7 @@ function setupAceHandlers(ace: Ace.Editor) {
         }
 
         recommendationTimer = window.setTimeout(() => {
-            helpers.getNgRootScope().$broadcast("reloadRecommendations")
+            reloadRecommendations()
             if (FLAGS.SHOW_CAI) {
                 store.dispatch(cai.checkForCodeUpdates())
             }
@@ -302,7 +302,7 @@ export const Editor = () => {
         <div ref={editorElement} id="editor" className="code-container">
             {/* import button */}
             {activeScript?.readonly && !embedMode
-            && <div className="floating-bar" onClick={() => helpers.getNgMainController().scope().importScript(activeScript)}>
+            && <div className="floating-bar" onClick={() => importScript(activeScript)}>
                 <div>{/* DO NOT REMOVE: this is an empty div to block the space before the next div */}</div>
                 <div className="btn-action btn-floating shake">
                     <i className="icon icon-import"></i><span>IMPORT TO EDIT</span>
