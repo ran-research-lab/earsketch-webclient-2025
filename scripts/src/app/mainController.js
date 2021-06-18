@@ -7,9 +7,11 @@ import { CompetitionSubmission } from './CompetitionSubmission'
 import * as collaboration from './collaboration'
 import { Download } from './Download'
 import esconsole from '../esconsole'
+import { ErrorForm } from './ErrorForm'
 import * as ESUtils from '../esutils'
 import * as exporter from './exporter'
 import { ForgotPassword } from './ForgotPassword'
+import { openShare } from './IDE'
 import * as user from '../user/userState';
 import reporter from './reporter';
 import * as scripts from '../browser/scriptsState';
@@ -21,29 +23,32 @@ import * as curriculum from '../browser/curriculumState';
 import * as layout from '../layout/layoutState';
 import * as Layout from '../layout/Layout';
 import * as cai from '../cai/caiState';
-import { wrapModal } from '../helpers';
+import * as helpers from '../helpers';
 import { ProfileEditor } from './ProfileEditor';
 import * as recommender from './recommender';
 import { RenameScript, RenameSound } from './Rename';
 import { ScriptAnalysis } from './ScriptAnalysis';
 import { ScriptHistory } from './ScriptHistory';
 import { ScriptShare } from './ScriptShare';
+import { SoundUploader } from './SoundUploader'
 import * as userNotification from './userNotification';
 import * as userProject from './userProject';
 import i18n from "i18next";
 
 // Temporary glue from $uibModal to React components.
-app.component("forgotpasswordController", wrapModal(ForgotPassword))
-app.component("analyzeScriptController", wrapModal(ScriptAnalysis))
-app.component("editProfileController", wrapModal(ProfileEditor))
-app.component("changepasswordController", wrapModal(ChangePassword))
-app.component("downloadController", wrapModal(Download))
-app.component("scriptVersionController", wrapModal(ScriptHistory))
-app.component("renameController", wrapModal(RenameScript))
-app.component("renameSoundController", wrapModal(RenameSound))
-app.component("accountController", wrapModal(AccountCreator))
-app.component("submitCompetitionController", wrapModal(CompetitionSubmission))
-app.component("shareScriptController", wrapModal(ScriptShare))
+app.component("forgotpasswordController", helpers.wrapModal(ForgotPassword))
+app.component("analyzeScriptController", helpers.wrapModal(ScriptAnalysis))
+app.component("editProfileController", helpers.wrapModal(ProfileEditor))
+app.component("changepasswordController", helpers.wrapModal(ChangePassword))
+app.component("downloadController", helpers.wrapModal(Download))
+app.component("scriptVersionController", helpers.wrapModal(ScriptHistory))
+app.component("renameController", helpers.wrapModal(RenameScript))
+app.component("renameSoundController", helpers.wrapModal(RenameSound))
+app.component("accountController", helpers.wrapModal(AccountCreator))
+app.component("submitCompetitionController", helpers.wrapModal(CompetitionSubmission))
+app.component("shareScriptController", helpers.wrapModal(ScriptShare))
+app.component("uploadSoundController", helpers.wrapModal(SoundUploader))
+app.component("errorController", helpers.wrapModal(ErrorForm))
 
 /**
  * @module mainController
@@ -53,10 +58,7 @@ app.controller("mainController", ['$rootScope', '$scope', '$http', '$uibModal', 
         $scope.bubble = state;
     });
 
-    $scope.numTabs = 0;
-    $ngRedux.connect(state => ({ openTabs: state.tabs.openTabs }))(tabs => {
-        $scope.numTabs = tabs.openTabs.length;
-    });
+    $ngRedux.connect(state => ({ language: state.app.scriptLanguage }))(({ language }) => $scope.dispLang = language)
 
     $ngRedux.dispatch(sounds.getDefaultSounds());
     if (FLAGS.SHOW_FEATURED_SOUNDS) {
@@ -65,6 +67,16 @@ app.controller("mainController", ['$rootScope', '$scope', '$http', '$uibModal', 
     if (FLAGS.FEATURED_ARTISTS && FLAGS.FEATURED_ARTISTS.length) {
         $ngRedux.dispatch(sounds.setFeaturedArtists(FLAGS.FEATURED_ARTISTS));
     }
+
+    $scope.reportError = () => helpers.getNgService("$uibModal").open({ component: "errorController" });
+    
+    $scope.openUploadWindow = () => {
+        if (userProject.isLoggedIn()) {
+            helpers.getNgService("$uibModal").open({ component: 'uploadSoundController' })
+        } else {
+            userNotification.show(i18n.t('messages:general.unauthenticated'), 'failure1')
+        }
+    };
 
     $scope.loggedIn = false;
     $scope.showIDE = true;
@@ -247,22 +259,6 @@ app.controller("mainController", ['$rootScope', '$scope', '$http', '$uibModal', 
         userNotification.state.isInLoadingScreen = true;
     };
 
-    /**
-     *
-     * @param compress
-     */
-    $scope.soundQuality = function (compress) {
-        esconsole('sound quality set to ' + compress, ['debug', 'main']);
-        if (compress && (ESUtils.whichBrowser().match('Safari') !== null || ESUtils.whichBrowser().match('Edge') !== null)) {
-            esconsole('Safari does not support low bandwidth audio decoder, continuing with WAV',['WARNING','MAIN']);
-            $scope.audioQuality = false; // use wav
-        }
-        else {
-            $scope.audioQuality = compress;
-        }
-        $scope.updateSoundQualityGlyph($scope.audioQuality);
-    };
-
     // TODO: is this doing anything??? check
     /**
      *
@@ -285,46 +281,12 @@ app.controller("mainController", ['$rootScope', '$scope', '$http', '$uibModal', 
             esconsole('Loading ogg', ['debug', 'init']);
     };
 
-    /**
-     *
-     * @param page
-     */
-    $scope.setPage = function (page) {
-        if (page === "workstation") {
-            $scope.$broadcast('workstation', {});
-            $scope.handleCombinedViewStyling(false);
-            $scope.showIDE = false;
-            $scope.showAll = false;
-        }
-        else if (page === "development") {
-            $scope.$broadcast('development', {});
-            $scope.handleCombinedViewStyling(false);
-            $scope.showIDE = true;
-            $scope.showAll = false;
-        }
-        else if (page === 'all') {
-            $scope.$broadcast('workstation', {});
-            $scope.$broadcast('development', {});
-            $scope.handleCombinedViewStyling(true);
-            $scope.showAll = true;
-        }
-    };
-
     $scope.scripts = [];
     $scope.isManualLogin = false;
 
     // these should be populated from somewhere else and not hard-coded, most likely
     $scope.languages = [{'lang': 'Python'}, {'lang': 'JavaScript'}];
     $scope.fontSizes = [{'size': 10}, {'size': 12}, {'size': 14}, {'size': 18}, {'size': 24}, {'size': 36}];
-
-    // mainly for alternate display in curriculum / API browser
-    $scope.dispLang = localStorage.getItem('language') ?? 'python';
-    // this may be overridden by URL parameter later
-
-    $scope.$on('language', function (event, value) {
-        // TODO: this is getting too many times when switching tabs
-        $scope.dispLang = value;
-    });
 
     $scope.openShareAfterLogin = function() {
         $scope.isManualLogin = true;
@@ -418,10 +380,6 @@ app.controller("mainController", ['$rootScope', '$scope', '$http', '$uibModal', 
                             // $rootScope.$broadcast('showLoginMessage');
                         } else {
                             userNotification.show(i18n.t('messages:general.loginsuccess'), 'normal', 0.5);
-                        }
-
-                        if ($location.search()['sharing'] && $scope.isManualLogin) {
-                            $rootScope.$broadcast('openShareAfterLogin');
                         }
 
                         $scope.loggedInUserName = $scope.username;
@@ -626,25 +584,6 @@ app.controller("mainController", ['$rootScope', '$scope', '$http', '$uibModal', 
         });
     };
 
-    $scope.handleCombinedViewStyling = function (combined) {
-        if (combined) {
-            // set width of main view to full width of window
-            angular.element('.tab-content').width(angular.element( window ).width());
-            angular.element('.tab-content').addClass('combined-view');
-            angular.element('#devctrl').addClass('combined-view');
-            angular.element('.workstation').addClass('combined-view');
-            angular.element('.loading').addClass('combined-view');
-            angular.element('.license').addClass('combined-view');
-        } else {
-            angular.element('.tab-content').css('width', '');
-            angular.element('.tab-content').removeClass('combined-view');
-            angular.element('#devctrl').removeClass('combined-view');
-            angular.element('.workstation').removeClass('combined-view');
-            angular.element('.loading').removeClass('combined-view');
-            angular.element('.license').removeClass('combined-view');
-        }
-    };
-
     $scope.showNotification = false;
     $scope.notificationList = userNotification.history;
     $scope.showNotificationHistory = false;
@@ -708,9 +647,7 @@ app.controller("mainController", ['$rootScope', '$scope', '$http', '$uibModal', 
 
     $scope.openSharedScript = function (shareid) {
         esconsole('opening a shared script: ' + shareid, 'main');
-        angular.element('[ng-controller=ideController]').scope().openShare(shareid).then(() => {
-            $ngRedux.dispatch(scripts.syncToNgUserProject());
-        });
+        openShare(shareid).then(() => $ngRedux.dispatch(scripts.syncToNgUserProject()));
         $scope.showNotification = false;
         $scope.showNotificationHistory = false;
     };
@@ -730,19 +667,10 @@ app.controller("mainController", ['$rootScope', '$scope', '$http', '$uibModal', 
 
     //=================================================
 
-    /**
-     * @name setFontSize
-     * @function
-     * @param fontSize {number}
-     */
-    $scope.$on('initFontSize', function (event, val) {
-        $scope.selectedFont = val;
-    });
+    $ngRedux.connect(state => ({ size: state.app.fontSize }))(({ size }) => $scope.selectedFont = size)
 
     $scope.setFontSize = function (fontSize) {
-        esconsole('resizing global font size to ' + fontSize, 'debug');
-        $scope.selectedFont = fontSize;
-        $rootScope.$broadcast('fontSizeChanged', fontSize);
+        $ngRedux.dispatch(appState.setFontSize(fontSize));
     };
 
     $scope.enterKeySubmit = function (event) {
@@ -779,10 +707,6 @@ app.controller("mainController", ['$rootScope', '$scope', '$http', '$uibModal', 
             $scope.hljsTheme = 'vs';
         }
     });
-
-    $scope.reportError = function () {
-        angular.element('[ng-controller=ideController]').scope().reportError();
-    };
 
     try {
         var shareID = ESUtils.getURLParameter('edit');
@@ -1027,7 +951,6 @@ app.controller("mainController", ['$rootScope', '$scope', '$http', '$uibModal', 
         if (openTabs.includes(script.shareid)) {
             $ngRedux.dispatch(tabs.setActiveTabAndEditor(imported.shareid));
             userProject.openScript(imported.shareid);
-            $rootScope.$broadcast('selectScript', imported.shareid);
         }
     };
     
@@ -1080,11 +1003,6 @@ app.controller("mainController", ['$rootScope', '$scope', '$http', '$uibModal', 
         });
     };
 
-    // TODO: Remove this.
-    $scope.$on('createScript', () => {
-        $ngRedux.dispatch(scripts.syncToNgUserProject());
-    });
-
     $scope.$on('recommenderScript', (event, script) => {
         if (script) {
             let input = recommender.addRecInput([], script);
@@ -1118,12 +1036,6 @@ app.controller("mainController", ['$rootScope', '$scope', '$http', '$uibModal', 
         }
         script && $rootScope.$broadcast('recommenderScript', script);
     });
-
-    $scope.$on('language', (event, language) => {
-        $ngRedux.dispatch(appState.setScriptLanguage(language));
-    })
-
-    $scope.$on('fontSizeChanged', (event, val) => $ngRedux.dispatch(appState.setFontSize(val)))
 
     $scope.$on('newCAIMessage', () => {
         if (FLAGS.SHOW_CAI && !$scope.showCAIWindow) {
