@@ -1,4 +1,5 @@
 import { DAWData } from "./app/player"
+import i18n from "i18next"
 
 export const measureToTime = (measure: number, tempo: number, timeSignature=4) => {
     if (tempo === -1) tempo = 120
@@ -224,23 +225,16 @@ export const formatTime = (milliseconds: number) => {
     const years = Math.floor(days / 365)
 
     switch (true) {
-        case seconds < 1: return 'just now'
-        case minutes < 1: return 'recently'
-        case minutes < 2: return '1 minute ago'
-        case hours < 1: return minutes + ' minutes ago'
-        case hours < 2: return '1 hour ago'
-        case days < 1: return hours + ' hours ago'
-        case days < 2: return 'yesterday'
-        case weeks < 1: return days + ' days ago'
-        case weeks < 2: return 'last week'
-        case months < 1: return weeks + ' weeks ago'
-        case months < 2: return 'last month'
-        case years < 1: return months + ' months ago'
-        case years < 2: return 'last year'
-        default: return years + ' years ago'
+        case seconds < 1: return i18n.t('formattedTime.justNow')
+        case minutes < 1: return i18n.t('formattedTime.recently')
+        case hours < 1: return i18n.t('formattedTime.minutesAgo', { count: minutes })
+        case days < 1: return i18n.t('formattedTime.hoursAgo', { count: hours })
+        case weeks < 1: return i18n.t('formattedTime.daysAgo', { count: days })
+        case months < 1: return i18n.t('formattedTime.weeksAgo', { count: weeks })
+        case years < 1: return i18n.t('formattedTime.monthsAgo', { count: months })
+        default: return i18n.t('formattedTime.yearsAgo', { count: years })
     }
 }
-
 
 const defaultTo = (value: number, defaultValue: number) => {
     return isNaN(value) ? defaultValue : value
