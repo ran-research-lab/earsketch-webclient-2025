@@ -157,12 +157,6 @@ if ((M[0] === "Chrome" && +M[1] < 24) || (M[0] === "Firefox" && +M[1] < 25)) {
     require("autograderAWSController")
     require("autograder3Controller")
 
-    // CAI
-    require("caiAnalysisModule")
-    require("caiStudentHistoryModule")
-    require("caiDialogue")
-    require("codeSuggestion")
-
     app.factory("$exceptionHandler", () => {
         return (exception: any, cause: any) => {
             console.log(exception)
