@@ -15,6 +15,7 @@ export const RenameScript = ({ script, conflict, close }: { script: ScriptEntity
     const [name, setName] = useState(parseName(script.name))
     const extension = parseExt(script.name)
     const [error, setError] = useState("")
+    const { t } = useTranslation()
 
     const confirm = () => {
         try {
@@ -26,27 +27,27 @@ export const RenameScript = ({ script, conflict, close }: { script: ScriptEntity
             script.name = fullname
             close(script)
         } catch (error) {
-            setError(error)
+            setError(t(error))
         }
     }
 
     return <>
-        <div className="modal-header">Rename Script</div>
+        <div className="modal-header">{t('renameScript.title')}</div>
         <form onSubmit={e => { e.preventDefault(); confirm() }}>
             <div className="modal-body">
                 {error && <div className="alert alert-danger">
                     {error}
                 </div>}
-                {conflict && <>A script named '{script.name}' already exists in your workspace.<br /></>}
-                Enter the new name for this script:
+                {conflict && t('renameScript.alreadyExists', { scriptName: script.name })}
+                {t('renameScript.prompt')}
                 <div className="input-group">
                     <input type="text" className="form-control" value={name} onChange={e => setName(e.target.value)} autoFocus />
                     <span className="input-group-addon">{extension}</span>
                 </div>
             </div>
             <div className="modal-footer">
-                <input type="submit" className="btn btn-primary" value="Rename" />
-                <input type="button" className="btn btn-default" onClick={() => close()} value={conflict ? "Append Suffix" : "Cancel"} />
+                <input type="submit" className="btn btn-primary" value={t('rename.submit') as string} />
+                <input type="button" className="btn btn-default" onClick={() => close()} value={conflict ? t('renameScript.appendSuffix') as string : t('cancel') as string} />
             </div>
         </form>
     </>
@@ -89,18 +90,18 @@ export const RenameSound = ({ sound, close }: { sound: SoundEntity, close: () =>
     }
 
     return <>
-        <div className="modal-header">Rename Sound</div>
+        <div className="modal-header">{t('renameSound.title')}</div>
         <form onSubmit={e => { e.preventDefault(); confirm() }}>
             <div className="modal-body">
-                <div>Enter the new name for your sound:</div>
+                <div>{t('renameSound.prompt')}</div>
                 <div className="flex items-center mt-3">
                     <span>{username}_</span>
                     <input type="text" className="form-control" value={name} onChange={e => setName(e.target.value)} autoFocus />
                 </div>
             </div>
             <div className="modal-footer">
-                <input type="submit" className="btn btn-primary" value="Rename" />
-                <input type="button" className="btn btn-default" onClick={close} value="Cancel" />
+                <input type="submit" className="btn btn-primary" value={t('rename.submit') as string} />
+                <input type="button" className="btn btn-default" onClick={close} value={t('cancel') as string} />
             </div>
         </form>
     </>

@@ -41,10 +41,10 @@ export const ProfileEditor = ({ username, password, email: _email, role, firstNa
             if (role === "teacher" && _firstName === "" || _lastName === "" || _email === "") {
                 userNotification.show(t('messages:user.teachersLink'), "editProfile")
             }
-            userNotification.show("Your user profile was updated!", "success")
+            userNotification.show(t('profileEditor.success'), "success")
             close({ firstName: _firstName, lastName:_lastName, email: _email })
         }).catch(() => {
-            setError("There was an error when updating the user profile.")
+            setError(t('profileEditor.error'))
         })
     }
 
@@ -61,7 +61,7 @@ export const ProfileEditor = ({ username, password, email: _email, role, firstNa
 
     return <>
         <div className="modal-header">
-            <h3>Edit Profile for {username} ({role})</h3>
+            <h3>{t('profileEditor.prompt', { username })} ({role})</h3>
         </div>
 
         <form name="userForm">
@@ -76,13 +76,13 @@ export const ProfileEditor = ({ username, password, email: _email, role, firstNa
                     <div className="row">
                         <div className="col-md-6">
                             <div className="form-group">
-                                <input type="text" className="form-control" name="firstname" placeholder="First Name"
+                                <input type="text" className="form-control" name="firstname" placeholder={t('formFieldPlaceholder.firstName')}
                                     value={firstName} onChange={e => setFirstName(e.target.value)} onKeyDown={enterSubmit} />
                             </div>
                         </div>
                         <div className="col-md-6">
                             <div className="form-group">
-                                <input type="text" className="form-control" name="lastname" placeholder="Last Name"
+                                <input type="text" className="form-control" name="lastname" placeholder={t('formFieldPlaceholder.lastName')}
                                     value={lastName} onChange={e => setLastName(e.target.value)} onKeyDown={enterSubmit} />
                             </div>
                         </div>
@@ -92,7 +92,7 @@ export const ProfileEditor = ({ username, password, email: _email, role, firstNa
                 <div className="row">
                     <div className="col-md-12">
                         <div className="form-group">
-                            <input type="email" className="form-control" name="email" placeholder={"Email Address" + (role === "student" ? " (Optional)" : "")}
+                            <input type="email" className="form-control" name="email" placeholder={(role === "student" ? t('formFieldPlaceholder.emailOptional') : t('formFieldPlaceholder.email'))}
                                    value={email} onChange={e => setEmail(e.target.value)} onKeyDown={enterSubmit} />
                         </div>
                     </div>
@@ -100,9 +100,9 @@ export const ProfileEditor = ({ username, password, email: _email, role, firstNa
             </div>
 
             <div className="modal-footer">
-                <span onClick={openChangePasswordModal} style={{float: "left"}}><a href="#">CHANGE PASSWORD</a></span>
-                <span onClick={close}><a href="#" style={{color: "#d04f4d", marginRight: "14px"}}><i className="icon icon-cross2"></i>CANCEL</a></span>
-                <span onClick={updateProfile} style={{color: "#337ab7"}}><a href="#"><i className="icon icon-checkmark"></i>UPDATE</a></span>
+                <span onClick={openChangePasswordModal} style={{float: "left"}}><a href="#">{t('changePassword.prompt').toLocaleUpperCase()}</a></span>
+                <span onClick={close}><a href="#" style={{color: "#d04f4d", marginRight: "14px"}}><i className="icon icon-cross2"></i>{t('cancel').toLocaleUpperCase()}</a></span>
+                <span onClick={updateProfile} style={{color: "#337ab7"}}><a href="#"><i className="icon icon-checkmark"></i>{t('update').toLocaleUpperCase()}</a></span>
             </div>
         </form>
     </>
