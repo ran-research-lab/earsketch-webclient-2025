@@ -5,7 +5,7 @@ import * as userConsole from '../ide/console'
 import * as userProject from './userProject'
 import * as caiAnalysisModule from '../cai/analysis'
 
-app.controller("autograder3Controller",
+app.controller("codeAnalyzerCAIController",
 ['$scope',
 function($scope) {
 
@@ -93,7 +93,7 @@ function($scope) {
       $scope.results = [];
       $scope.processing = null;
 
-      esconsole("Running autograder.", ['DEBUG']);
+      esconsole("Running code analyzer.", ['DEBUG']);
 
       if($scope.csvInputMode) {
         $scope.urls = document.querySelector('.output').innerText;
@@ -112,8 +112,8 @@ function($scope) {
         esconsole("ShareId: " + shareId, ['DEBUG']);
         p = p.then(function() {
           $scope.processing = shareId;
+          $scope.$apply();
           var ret = userProject.loadScript(shareId).then($scope.runScriptHistory);
-          $scope.processing = null;
           if (ret != 0)
             return ret;
         });
@@ -127,20 +127,13 @@ function($scope) {
           var scriptVersions = Object.keys(scriptHistory);
           if (!$scope.options["HISTORY"])
               scriptVersions = [scriptVersions[scriptVersions.length-1]];
-
           var p = new Promise(function(resolve) { resolve(); });
-
-
           angular.forEach(scriptVersions, function(version) {
-
             p = p.then(function() {
-
               scriptHistory[version].name = script.name;
-
               return $scope.runScript(scriptHistory[version], version).then(function(result) {
                 return result;
               });
-
           });
 
         });
@@ -183,13 +176,17 @@ function($scope) {
               version: version,
               reports: Object.assign({}, reports),
             });
-            }).catch(function(err) {
-              esconsole(err, ['ERROR']);
-              $scope.results.push({
-                script: script,
-                version: version,
-                error: err,
-              });
+            $scope.processing = null;
+            $scope.$apply();
+          }).catch(function(err) {
+            esconsole(err, ['ERROR']);
+            $scope.results.push({
+              script: script,
+              version: version,
+              error: err,
+            });
+            $scope.processing = null;
+            $scope.$apply();
           });
     };
 
@@ -269,7 +266,7 @@ function($scope) {
       var idx = 1;
 
       angular.forEach($scope.results, function(result) {
-        row = [];
+        var row = [];
         for (var i = 0; i < headers.length; i++) {
           row[i] = '';
         }
@@ -314,7 +311,7 @@ function($scope) {
       var url = window.URL.createObjectURL(blob);
       // download the script
       a.href = url;
-      a.download = 'autograder_report.csv';
+      a.download = 'code_analyzer_report.csv';
       a.target = '_blank';
       esconsole('File location: ' + a.href, ['debug','exporter']);
       a.click();
