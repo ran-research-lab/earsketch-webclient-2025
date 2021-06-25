@@ -186,6 +186,10 @@ export async function openShare(shareid: string) {
 
             // user has not opened this shared link before
             result = await userProject.loadScript(shareid, true) as ScriptEntity
+            if (!result) {
+                userNotification.show("This share script link is invalid.")
+                return
+            }
             if (isEmbedded) embeddedScriptLoaded(result.username, result.name, result.shareid)
 
             if (result.username !== userProject.getUsername()) {
@@ -431,7 +435,7 @@ export const IDE = () => {
                             {numTabs === 0 && <div className="h-full flex flex-col justify-evenly text-4xl text-center">
                                 <div className="leading-relaxed">
                                     <div id="no-scripts-warning">You have no scripts loaded.</div>
-                                    <a href="#" onClick={createScript}>Click here to create a new script!</a>
+                                    <a href="#" onClick={e => { e.preventDefault(); createScript() }}>Click here to create a new script!</a>
                                 </div>
 
                                 <div className="leading-relaxed empty-script-lang-message">

@@ -10,7 +10,6 @@ import * as audioLibrary from "./audiolibrary"
 import { Bubble } from "../bubble/Bubble"
 import * as bubble from "../bubble/bubbleState"
 import * as cai from "../cai/caiState"
-import { ChangePassword } from "./ChangePassword"
 import * as collaboration from "./collaboration"
 import { ScriptEntity, SoundEntity } from "common"
 import { CompetitionSubmission } from "./CompetitionSubmission"
@@ -79,10 +78,6 @@ export function openModal<T extends appState.Modal>(modal: T, props?: Omit<Param
 // TODO: Temporary workaround for autograders 1 & 3, which replace the prompt function.
 (window as any).esPrompt = async (message: string) => {
     return (await openModal(Prompt, { message })) ?? ""
-}
-
-export function changePassword() {
-    openModal(ChangePassword)
 }
 
 export function renameSound(sound: SoundEntity) {
@@ -402,7 +397,7 @@ export const App = () => {
     useEffect(() => {
         // Attempt to load userdata from a previous session.
         if (userProject.isLoggedIn()) {
-            login().catch((error: Error) => {
+            login(username, password).catch((error: Error) => {
                 if (window.confirm("We are unable to automatically log you back in to EarSketch. Press OK to reload this page and log in again.")) {
                     localStorage.clear()
                     window.location.reload()
@@ -428,7 +423,7 @@ export const App = () => {
         setup()
     }, [])
 
-    const login = async () => {
+    const login = async (username: string, password: string) => {
         esconsole("Logging in", ["DEBUG","MAIN"])
         //save all unsaved open scripts (don't need no promises)
         userProject.saveAll()
@@ -453,7 +448,6 @@ export const App = () => {
         // get user role (can verify the admin / teacher role here?)
         if (userInfo.role) {
             setRole(userInfo.role)
-
             if (userInfo.role === "teacher") {
                 if (userInfo.firstname === "" || userInfo.lastname === "" || userInfo.email === "") {
                     userNotification.show(i18n.t("messages:user.teachersLink"), "editProfile")
@@ -534,7 +528,7 @@ export const App = () => {
         if (result) {
             setUsername(result.username)
             setPassword(result.password)
-            login()
+            login(result.username, result.password)
         }
     }
 
@@ -684,7 +678,7 @@ export const App = () => {
         
                     {/* user login menu */}
                     {!loggedIn &&
-                    <form className="flex items-center" onSubmit={e => { e.preventDefault(); login() }}>
+                    <form className="flex items-center" onSubmit={e => { e.preventDefault(); login(username, password) }}>
                         <input type="text" autoComplete="on" name="username" value={username} onChange={e => setUsername(e.target.value)} placeholder="Username" required />
                         <input type="password" autoComplete="current-password" name="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" required />
                         <button type="submit" className="btn btn-xs btn-default" style={{ marginLeft: "6px", padding: "2px 5px 3px" }}><i className="icon icon-arrow-right" /></button>
