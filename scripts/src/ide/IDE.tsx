@@ -267,7 +267,7 @@ export async function compileCode() {
     const code = editor.getValue()
 
     const startTime = Date.now()
-    const language = store.getState().app.scriptLanguage
+    const language = ESUtils.parseLanguage(tabs.selectActiveTabScript(store.getState()).name)
 
     editor.clearErrors()
     ideConsole.clear()
