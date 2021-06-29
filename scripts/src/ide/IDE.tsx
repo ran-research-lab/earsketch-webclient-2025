@@ -125,6 +125,14 @@ export function initEditor() {
         }
     })
 
+    // Save scripts when not focused on editor.
+    window.addEventListener('keydown', event => {
+        if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+            event.preventDefault()
+            editor.ace.commands.exec('saveScript', editor.ace, [])
+        }
+    })
+
     editor.ace.commands.addCommand({
         name: "runCode",
         bindKey: {
