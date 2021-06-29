@@ -178,7 +178,7 @@ export async function importScript(script: ScriptEntity) {
         script = tabs.selectActiveTabScript(store.getState())
     }
 
-    const imported = await userProject.importScript(Object.assign({},script))
+    const imported = await userProject.importScript(Object.assign({}, script))
     await userProject.refreshCodeBrowser()
     store.dispatch(scripts.syncToNgUserProject())
 
@@ -378,6 +378,8 @@ export const App = () => {
 
     const showAmazonBanner = FLAGS.SHOW_AMAZON_BANNER || location.href.includes("competition")
 
+    const sharedScriptID = ESUtils.getURLParameter("sharing")
+
     const MISC_ACTIONS = [
         { name: "Start Quick Tour", action: resumeQuickTour },
         { name: "Switch Theme", action: toggleColorTheme },
@@ -405,7 +407,7 @@ export const App = () => {
                 }
             })
             // Show bubble tutorial when not opening a share link or in a CAI study mode.
-            if (!ESUtils.getURLParameter("sharing") && !FLAGS.SHOW_CAI) {
+            if (!sharedScriptID && !FLAGS.SHOW_CAI) {
                 store.dispatch(bubble.resume())
             }
         }
@@ -554,9 +556,12 @@ export const App = () => {
         }
     }
 
-    const openSharedScript = (shareid: string) => {
-        esconsole("opening a shared script: " + shareid, "main")
-        openShare(shareid).then(() => store.dispatch(scripts.syncToNgUserProject()))
+    const openSharedScript = (shareID: string) => {
+        esconsole("opening a shared script: " + shareID, "main")
+        openShare(shareID).then(() => {
+            store.dispatch(scripts.syncToNgUserProject())
+            store.dispatch(tabs.setActiveTabAndEditor(shareID))
+        })
         setShowNotifications(false)
         setShowNotificationHistory(false)
     }
