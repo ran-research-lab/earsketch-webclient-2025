@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { useTranslation } from "react-i18next"
+import Split from "react-split"
 
 import { openModal } from "../app/App"
 import * as appState from "../app/appState"
@@ -21,8 +22,7 @@ import { setReady, dismissBubble } from "../bubble/bubbleState"
 import * as scripts from "../browser/scriptsState"
 import * as editor from "./Editor"
 import * as ide from "./ideState"
-import * as layout from "../layout/layoutState"
-import * as Layout from "../layout/Layout"
+import * as layout from "./layoutState"
 import reporter from "../app/reporter"
 import * as tabs from "./tabState"
 import * as cai from "../cai/caiState"
@@ -365,6 +365,7 @@ export const IDE = () => {
     const embedMode = useSelector(appState.selectEmbedMode)
     const embeddedScriptName = useSelector(appState.selectEmbeddedScriptName)
     const embeddedScriptUsername = useSelector(appState.selectEmbeddedScriptUsername)
+    const hideDAW = useSelector(appState.selectHideDAW)
     const hideEditor = useSelector(appState.selectHideEditor)
 
     const bubbleActive = useSelector(bubble.selectActive)
@@ -389,16 +390,39 @@ export const IDE = () => {
         }
     }, [logs])
 
+    const gutterSize = hideEditor ? 0 : 8
+    const isWestOpen = useSelector(layout.isWestOpen)
+    const isEastOpen = useSelector(layout.isEastOpen)
+    const minWidths = embedMode ? [0, 0, 0] : [isWestOpen ? layout.MIN_WIDTH : layout.COLLAPSED_WIDTH, layout.MIN_WIDTH, isEastOpen ? layout.MIN_WIDTH : layout.COLLAPSED_WIDTH]
+    const maxWidths = embedMode ? [0, Infinity, 0] : [isWestOpen ? Infinity : layout.COLLAPSED_WIDTH, Infinity, isEastOpen ? Infinity : layout.COLLAPSED_WIDTH]
+    const minHeights = embedMode ? [layout.MIN_DAW_HEIGHT, 0, 0] : [layout.MIN_DAW_HEIGHT, layout.MIN_EDITOR_HEIGHT, layout.MIN_DAW_HEIGHT]
+    const maxHeights = hideDAW ? [layout.MIN_DAW_HEIGHT, Infinity, 0] : undefined
+
+    let horizontalRatio = useSelector(layout.selectHorizontalRatio)
+    let verticalRatio = useSelector(layout.selectVerticalRatio)
+    if (embedMode) {
+        horizontalRatio = [0, 100, 0]
+        verticalRatio = hideEditor ? [100, 0, 0] : (hideDAW ? [0, 100, 0] : [25, 75, 0])
+    }
+
     return <div id="main-container" className="flex-grow flex flex-row h-full overflow-hidden" style={embedMode ? { top: "0", left: "0" } : {}}>
         <div className="w-full h-full">
-            <div id="layout-container" className="split flex flex-row h-full">
+            <Split
+                className="split flex flex-row h-full" gutterSize={gutterSize} snapOffset={0}
+                sizes={horizontalRatio} minSize={minWidths} maxSize={maxWidths}
+                onDragEnd={ratio => dispatch(layout.setHorizontalSizesFromRatio(ratio))}
+            >
                 <div id="sidebar-container" style={bubbleActive && [5,6,7,9].includes(bubblePage) ? { zIndex: 35 } : {}}>
                     <div className="overflow-hidden" id="sidebar"> {/* re:overflow, split.js width calculation can cause the width to spill over the parent width */}
                         <Browser />
                     </div>
                 </div>
 
-                <div className="split flex flex-col" id="content">
+                <Split
+                    className="split flex flex-col" gutterSize={gutterSize} snapOffset={0}
+                    sizes={verticalRatio} minSize={minHeights} maxSize={maxHeights} direction="vertical"
+                    onDragEnd={ratio => dispatch(layout.setVerticalSizesFromRatio(ratio))}
+                >
                     <div id="devctrl">
                         <div className="h-full max-h-full relative" id="workspace" style={bubbleActive && [3,4,9].includes(bubblePage) ? { zIndex: 35 } : {}}>
                             {loading
@@ -452,7 +476,7 @@ export const IDE = () => {
                             </div>
                         </div>
                     </div>
-                </div>
+                </Split>
 
                 <div className="h-full" id="curriculum-container" style={bubbleActive && [8,9].includes(bubblePage) ? { zIndex: 35 } : {}}>
                     {showCAI
@@ -460,7 +484,7 @@ export const IDE = () => {
                     : <Curriculum />}
                     {/* NOTE: The chat window might come back here at some point. */}
                 </div>
-            </div>
+            </Split>
         </div>
     </div>
 }
