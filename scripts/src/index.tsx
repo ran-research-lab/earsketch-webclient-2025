@@ -50,6 +50,8 @@ ace.config.setModuleUrl("ace/mode/javascript_worker", jsWorkerUrl)
 
 ;(window as any).droplet = droplet
 
+import { Autograder } from "./app/Autograder"
+
 // Initialize SoundCloud.
 // TODO: Make these environment variables. And maybe add an entry for default `npm run serve` port of 8080?
 const SOUNDCLOUD_ID_MAP = {
@@ -81,7 +83,7 @@ if ((M[0] === "Chrome" && +M[1] < 24) || (M[0] === "Firefox" && +M[1] < 25)) {
     alert("It appears you are using version " + M[1] + " of " + M[0] + ". Please upgrade your browser so that EarSketch functions properly.")
 }
 
-if (/\/autograder|codeAnalyzer\w*\/?$/.test(location.href)) {
+if (/\/codeAnalyzer\w*\/?$/.test(location.href)) {
     // Temporary hack for autograders: load angular and don't start the React app on autograder endpoints.
     // TODO: Replace this with normal routing after autograders have been migrated.
     // Async loading
@@ -98,8 +100,7 @@ if (/\/autograder|codeAnalyzer\w*\/?$/.test(location.href)) {
 
         app.filter("formatTimer", () => ESUtils.formatTime)
 
-        // Autograders
-        require("autograderController")
+        // Code Analyzers
         require("codeAnalyzerController")
         require("codeAnalyzerContestController")
         require("codeAnalyzerCAIController")
@@ -142,11 +143,12 @@ if (/\/autograder|codeAnalyzer\w*\/?$/.test(location.href)) {
     })
 } else {
     // Load the normal React app.
+    const Content = /\/autograder\w*\/?$/.test(location.href) ? Autograder : App
     ReactDOM.render(
         <React.StrictMode>
             <Provider store={store}>
                 <PersistGate persistor={persistor}>
-                    <App />
+                    <Content />
                 </PersistGate>
             </Provider>
         </React.StrictMode>,

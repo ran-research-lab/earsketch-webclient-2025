@@ -27,6 +27,8 @@ declare const SC: any // Soundcloud
 declare const Sk: any
 
 declare module "xml2js"
+declare module "chance"
+declare var $: any
 
 declare const createAudioMeter: (audioContext: AudioContext, clipLevel: number, averaging: number, clipLag: number) => AudioNode
 declare const Recorder: any
