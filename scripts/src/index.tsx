@@ -45,12 +45,13 @@ import { PersistGate } from "redux-persist/integration/react"
 
 import { App } from "./app/App"
 import store, { persistor } from "./reducers"
+
+import { Autograder } from "./app/Autograder"
+import { CodeAnalyzer } from "./app/CodeAnalyzer"
 (window as any).Question = Question // Includes ES APIs.
 ace.config.setModuleUrl("ace/mode/javascript_worker", jsWorkerUrl)
 
 ;(window as any).droplet = droplet
-
-import { Autograder } from "./app/Autograder"
 
 // Initialize SoundCloud.
 // TODO: Make these environment variables. And maybe add an entry for default `npm run serve` port of 8080?
@@ -83,7 +84,7 @@ if ((M[0] === "Chrome" && +M[1] < 24) || (M[0] === "Firefox" && +M[1] < 25)) {
     alert("It appears you are using version " + M[1] + " of " + M[0] + ". Please upgrade your browser so that EarSketch functions properly.")
 }
 
-if (/\/codeAnalyzer\w*\/?$/.test(location.href)) {
+if (/\/codeAnalyzerCAI|codeAnalyzerContest\w*\/?$/.test(location.href)) {
     // Temporary hack for autograders: load angular and don't start the React app on autograder endpoints.
     // TODO: Replace this with normal routing after autograders have been migrated.
     // Async loading
@@ -101,7 +102,6 @@ if (/\/codeAnalyzer\w*\/?$/.test(location.href)) {
         app.filter("formatTimer", () => ESUtils.formatTime)
 
         // Code Analyzers
-        require("codeAnalyzerController")
         require("codeAnalyzerContestController")
         require("codeAnalyzerCAIController")
 
@@ -143,7 +143,15 @@ if (/\/codeAnalyzer\w*\/?$/.test(location.href)) {
     })
 } else {
     // Load the normal React app.
-    const Content = /\/autograder\w*\/?$/.test(location.href) ? Autograder : App
+    let Content
+    if (/\/autograder\w*\/?$/.test(location.href)) {
+        Content = Autograder
+    } else if (/\/codeAnalyzer\w*\/?$/.test(location.href)) {
+        Content = CodeAnalyzer
+    } else {
+        Content = App
+    }
+
     ReactDOM.render(
         <React.StrictMode>
             <Provider store={store}>
