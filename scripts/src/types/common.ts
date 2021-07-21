@@ -19,8 +19,7 @@ export interface Script {
     id?: string
     original_id?: string
     description?: string
-    // TODO: The server should never return a string for this... but various endpoints do, such as /services/scripts/save.
-    soft_delete?: boolean | string
+    soft_delete?: boolean
     activeUsers?: string | string[]
 }
 

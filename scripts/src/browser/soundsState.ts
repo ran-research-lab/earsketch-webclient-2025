@@ -6,7 +6,7 @@ import { RootState, ThunkAPI } from "../reducers"
 import { SoundEntity } from "common"
 import context from "../app/audiocontext"
 import * as audioLibrary from "../app/audiolibrary"
-import { postAuthForm, postForm } from "../app/userProject"
+import { get, postAuth } from "../app/userProject"
 
 interface SoundEntities {
     [fileKey: string]: SoundEntity
@@ -192,7 +192,7 @@ export const getDefaultSounds = createAsyncThunk<void, void, ThunkAPI>(
 export const getUserSounds = createAsyncThunk<void, string, ThunkAPI>(
     "sounds/getUserSounds",
     async (username, { dispatch }) => {
-        const endPoint = URL_DOMAIN + "/services/audio/getuseraudiotags"
+        const endPoint = URL_DOMAIN + "/audio/usertags"
         const params = new URLSearchParams({ username })
         const response = await fetch(`${endPoint}?${params}`, {
             method: "GET",
@@ -215,7 +215,7 @@ export const getUserSounds = createAsyncThunk<void, string, ThunkAPI>(
 export const getFavorites = createAsyncThunk<void, string, ThunkAPI>(
     "sounds/getFavorites",
     async (token, { dispatch }) => {
-        const result = postForm("/services/audio/getfavorites", {}, { Authorization: "Bearer " + token })
+        const result = await get("/audio/favorites", {}, { Authorization: "Bearer " + token })
         dispatch(setFavorites(result))
     }
 )
@@ -233,10 +233,10 @@ export const markFavorite = createAsyncThunk<void, { fileKey: string, isFavorite
             const params = { audio_file_key: fileKey, userowned: isUserOwned.toString() }
 
             if (markAsFavorite) {
-                await postAuthForm("/services/audio/addfavorite", params)
+                await postAuth("/audio/addfavorite", params)
                 dispatch(addFavorite(fileKey))
             } else {
-                await postAuthForm("/services/audio/removefavorite", params)
+                await postAuth("/audio/removefavorite", params)
                 dispatch(removeFavorite(fileKey))
             }
         }

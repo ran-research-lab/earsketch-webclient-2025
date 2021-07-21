@@ -43,10 +43,8 @@ async function uploadFile(file: Blob, key: string, extension: string, tempo: num
         throw i18n.t("messages:uploadcontroller.bigsize")
     }
 
-    // TODO: This endpoint should require authentication.
     const data = userProject.form({
         file,
-        username: userProject.getUsername(),
         file_key: key,
         // TODO: I don't think the server should allow arbitrary filenames unrelated to the key. This field should probably be replaced or removed.
         filename: `${key}${extension}`,
@@ -79,7 +77,8 @@ async function uploadFile(file: Blob, key: string, extension: string, tempo: num
     })
 
     onProgress(0)
-    request.open("POST", URL_DOMAIN + "/services/files/upload")
+    request.setRequestHeader("Authorization", "Bearer " + userProject.getToken())
+    request.open("POST", URL_DOMAIN + "/audio/upload")
     request.send(data)
     return promise
 }
@@ -281,7 +280,7 @@ const FreesoundTab = ({ close }: { close: () => void }) => {
         setResults(null)
         setSelected(null)
 
-        const data = await userProject.get("/services/audio/searchfreesound", { query })
+        const data = await userProject.get("/audio/searchfreesound", { query })
         const results = data.results
             .filter((result: any) => result.analysis?.rhythm?.bpm)
             .map((result: any) => ({
@@ -300,8 +299,7 @@ const FreesoundTab = ({ close }: { close: () => void }) => {
         try {
             validateUpload(key, result.bpm)
             try {
-                // TODO: This endpoint should require authentication.
-                await userProject.post("/services/files/uploadfromfreesound", {
+                await userProject.postAuth("/audio/uploadfromfreesound", {
                     username,
                     file_key: key,
                     tempo: result.bpm + "",
@@ -377,7 +375,7 @@ const TunepadTab = ({ close }: { close: () => void }) => {
 
     const login = useCallback(iframe => {
         if (!iframe) return
-        userProject.postAuthForm("/services/scripts/getembeddedtunepadid")
+        userProject.getAuth("/thirdparty/embeddedtunepadid")
             .then(result => {
                 tunepadWindow.current = iframe.contentWindow
                 tunepadOrigin.current = new URL(result.url).origin
