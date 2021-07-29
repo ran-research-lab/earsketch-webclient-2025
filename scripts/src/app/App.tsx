@@ -391,6 +391,14 @@ export const App = () => {
         })()
     }, [])
 
+    useEffect(() => {
+        if (theme === "dark") {
+            document.body.classList.add("dark")
+        } else {
+            document.body.classList.remove(("dark"))
+        }
+    }, [theme])
+
     const login = async (username: string, password: string) => {
         esconsole("Logging in", ["DEBUG", "MAIN"])
         saveAll()
@@ -538,7 +546,7 @@ export const App = () => {
         }
     }
 
-    return <div className={theme === "dark" ? "dark" : ""}>
+    return <div>
         {/* dynamically set the color theme */}
         <link rel="stylesheet" type="text/css" href={`css/earsketch/theme_${theme}.css`} />
 
