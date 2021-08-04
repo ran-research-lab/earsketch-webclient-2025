@@ -482,19 +482,20 @@ function kMeansGenre(measureView: any) {
         maxi = Math.max(...temp)
         while (maxi > 0) {
             for (const num in temp) {
-                if (maxi === 0) {
-                    return genre_list
-                }
-                if (temp[num] === maxi && maxi > 0 && !Object.values(genre_list).includes({ name: librarySoundGenres[num], value: temp[num] })) {
-                    genre_list[genre_idx] = { name: librarySoundGenres[num], value: temp[num] }
-                    genre_idx += 1
-                    temp[num] = 0
-                    maxi = Math.max(...temp)
-                }
-            }
+        if (maxi === 0) {
+          return genre_list
         }
+        if (temp[num] === maxi && maxi > 0 && !Object.values(genre_list).includes({name: librarySoundGenres[num], value: temp[num]})) {
+          genre_list[genre_idx] = {name:librarySoundGenres[num], value:temp[num]}
+          genre_idx += 1
+          temp[num] = 0
+          maxi = Math.max(...temp)
+        }
+      }
     }
-    const genreSampleList: any = []
+  }
+
+  const genreSampleList: any = []
     for (const measure in measureView) {
         genreSampleList.push([])
         for (const item in measureView[measure]) {

@@ -11,7 +11,7 @@ import * as runner from "./runner"
 const nativePrompt = (window as any).esPrompt
 
 // overwrite JavaScript random implementation with seedable one
-const randomSeed = (seed: number, useSeed: boolean) => {
+export const randomSeed = (seed: number, useSeed: boolean) => {
     Math.random = () => {
         const rng = new Chance(useSeed ? seed : Date.now())
         return rng.random()
@@ -31,7 +31,7 @@ export const compile = async (script: string, filename: string) => {
 }
 
 // Read a File object and return a promise that will resolve to the file text contents.
-const readFile = (file: File) => {
+export const readFile = (file: File) => {
     const p = new Promise<string>((resolve, reject) => {
         const r = new FileReader()
         r.onload = (evt) => {
@@ -137,7 +137,7 @@ const CodeEmbed = ({ sourceCode, language }: { sourceCode: string, language: str
 }
 
 interface ReferenceScript {
-    name: string,
+    name: string
     sourceCode: string
 }
 
@@ -156,17 +156,18 @@ const ReferenceFile = ({ referenceScript, compilingReference }:
                     : <a className="pull-right" onClick={() => setCollapse(true)}>Collapse</a>}
             </div>
             <div style={{ display: collapse ? "none" : "block" }}>
-                <CodeEmbed sourceCode={referenceScript.sourceCode} language={ESUtils.parseLanguage(referenceScript.name)}/>
+                <CodeEmbed sourceCode={referenceScript.sourceCode} language={ESUtils.parseLanguage(referenceScript.name)} />
             </div>
         </div>
     </div>
 }
 
 const ReferenceScriptUpload = ({ compileError, prompts, setReferenceResult, setCompileError, setTestAllTracks, setTestTracks, setUploads, setFiles, setPrompts }:
-    { compileError: string, prompts: string[], setReferenceResult: (r: DAWData | null) => void, setCompileError: (e: string) => void,
+    {
+        compileError: string, prompts: string[], setReferenceResult: (r: DAWData | null) => void, setCompileError: (e: string) => void,
         setTestAllTracks: (t: boolean) => void, setTestTracks: (t: boolean[]) => void,
         setUploads: (u: Upload[]) => void, setFiles: (f: File[]) => void, setPrompts: (p: string[]) => void
-}) => {
+    }) => {
     const [referenceScript, setReferenceScript] = useState({ name: "", sourceCode: "" } as ReferenceScript)
     const [compilingReference, setCompilingReference] = useState(false)
 
@@ -217,7 +218,7 @@ const ReferenceScriptUpload = ({ compileError, prompts, setReferenceResult, setC
         <div className="container">
             <h1>EarSketch Autograder</h1>
             {compileError &&
-            <div className="alert alert-danger" role="alert">{compileError}</div>}
+                <div className="alert alert-danger" role="alert">{compileError}</div>}
             <div className="panel panel-primary">
                 <div className="panel-heading">
                     Step 1: Upload a Reference Script
@@ -228,22 +229,18 @@ const ReferenceScriptUpload = ({ compileError, prompts, setReferenceResult, setC
             </div>
         </div>
         {referenceScript!.name.length > 0 &&
-        <ReferenceFile referenceScript={referenceScript} compilingReference={compilingReference}/>}
+            <ReferenceFile referenceScript={referenceScript} compilingReference={compilingReference} />}
     </div>
 }
 
 const ConfigureTest = ({
     referenceResult, compileError, testAllTracks, testTracks, allowPrompts, prompts, setTestAllTracks, setTestTracks, setAllowPrompts,
-}: { referenceResult: DAWData | null, compileError: string, testAllTracks: boolean, testTracks: boolean[], allowPrompts: boolean, prompts: string[],
-    setTestAllTracks: (t: boolean) => void, setTestTracks: (t: boolean[]) => void, setAllowPrompts: (a: boolean) => void }) => {
+}: {
+    referenceResult: DAWData | null, compileError: string, testAllTracks: boolean, testTracks: boolean[], allowPrompts: boolean, prompts: string[],
+    setTestAllTracks: (t: boolean) => void, setTestTracks: (t: boolean[]) => void, setAllowPrompts: (a: boolean) => void
+}) => {
     const [useSeed, setUseSeed] = useState(true)
     const [seed, setSeed] = useState(Date.now())
-
-    const updateTestTracks = (trackNumber: number, value: boolean) => {
-        const tracks = testTracks
-        tracks[trackNumber] = value
-        setTestTracks(tracks)
-    }
 
     const updateSeed = (seed: number, useSeed: boolean) => {
         setUseSeed(useSeed)
@@ -273,16 +270,16 @@ const ConfigureTest = ({
                         <br></br>
                         <ul>
                             {referenceResult && !compileError && !testAllTracks &&
-                            Object.keys(referenceResult.tracks).map((_, index) =>
-                                <li key={index}>
-                                    <label>
-                                        <input type="checkbox" onChange={e => updateTestTracks(index, e.target.checked)}></input>
-                                        {index === 0
-                                            ? <span>Main</span>
-                                            : <span>Track {index}</span>}
-                                    </label>
-                                </li>
-                            )}
+                                Object.keys(referenceResult.tracks).map((_, index) =>
+                                    <li key={index}>
+                                        <label>
+                                            <input type="checkbox" onChange={e => setTestTracks({ ...testTracks, [index]: e.target.checked })}></input>
+                                            {index === 0
+                                                ? <span>Main</span>
+                                                : <span>Track {index}</span>}
+                                        </label>
+                                    </li>
+                                )}
                         </ul>
                     </div>
                     <div className="col-md-4">
@@ -329,12 +326,12 @@ const TestResult = ({ upload, index }: { upload: Upload, index: number }) => {
     return <div className="panel panel-default">
         <div className="panel-heading">
             {!upload.compiled &&
-            <i className="es-spinner animate-spin mr-3"></i>}
+                <i className="es-spinner animate-spin mr-3"></i>}
             <b> {index + 1} </b> {upload.file.name}
             {upload.file.name.length > 50 &&
-            <span>...</span>}
+                <span>...</span>}
             {upload.compiled &&
-            !upload.error
+                !upload.error
                 ? upload.pass
                     ? <span className="label label-success" style={{ margin: "1%" }}>
                         Perfect match!
@@ -351,7 +348,7 @@ const TestResult = ({ upload, index }: { upload: Upload, index: number }) => {
         </div>
         <div>
             {upload.compiled && showCode &&
-                <CodeEmbed sourceCode={upload.script} language={ESUtils.parseLanguage(upload.file.name)}/>}
+                <CodeEmbed sourceCode={upload.script} language={ESUtils.parseLanguage(upload.file.name)} />}
         </div>
     </div>
 }
@@ -416,21 +413,21 @@ const TestResults = ({ uploads, files, referenceResult, testAllTracks, testTrack
             <ul>
                 {uploads.map((upload, index) =>
                     <li key={index}>
-                        <TestResult upload={upload} index={index}/>
+                        <TestResult upload={upload} index={index} />
                     </li>
                 )}
             </ul>
         </div>
         {uploads.length > 0 &&
-        <div className="container">
-            {uploads.length === files.length
-                ? <div className="alert alert-success">
-                    All scripts tested.
-                </div>
-                : <div className="alert alert-info">
-                    Testing script {uploads.length} / {files.length}
-                </div>}
-        </div>}
+            <div className="container">
+                {uploads.length === files.length
+                    ? <div className="alert alert-success">
+                        All scripts tested.
+                    </div>
+                    : <div className="alert alert-info">
+                        Testing script {uploads.length} / {files.length}
+                    </div>}
+            </div>}
     </div>
 }
 
@@ -470,17 +467,17 @@ export const Autograder = () => {
             setAllowPrompts={setAllowPrompts}
         />
         {referenceResult && !compileError &&
-        <TestResults
-            uploads={uploads}
-            files={files}
-            referenceResult={referenceResult}
-            testAllTracks={testAllTracks}
-            testTracks={testTracks}
-            allowPrompts={allowPrompts}
-            prompts={prompts}
-            setUploads={setUploads}
-            setFiles={setFiles}
-        />}
+            <TestResults
+                uploads={uploads}
+                files={files}
+                referenceResult={referenceResult}
+                testAllTracks={testAllTracks}
+                testTracks={testTracks}
+                allowPrompts={allowPrompts}
+                prompts={prompts}
+                setUploads={setUploads}
+                setFiles={setFiles}
+            />}
         <ModalContainer />
     </div>
 }
