@@ -163,7 +163,7 @@ export async function renderMp3(result: DAWData) {
 export async function mergeClips(clips: Clip[], tempoMap: TempoMap) {
     esconsole("Merging clips", ["debug", "renderer"])
     // calculate the length of the merged clips
-    const length = Math.max(0, ...clips.map(clip => clip.measure + (clip.start - clip.end)))
+    const length = Math.max(0, ...clips.map(clip => clip.measure + (clip.end - clip.start)))
     const duration = tempoMap.measureToTime(length + 1)
 
     // create an offline context for rendering
@@ -176,16 +176,13 @@ export async function mergeClips(clips: Clip[], tempoMap: TempoMap) {
         const source = new AudioBufferSourceNode(context, { buffer: clip.audio })
         source.connect(mix)
 
+        const bufferStartTime = tempoMap.measureToTime(clip.measure + (clip.start - 1))
         const startTime = tempoMap.measureToTime(clip.measure)
-        const startOffset = tempoMap.measureToTime(clip.start)
-        const endOffset = tempoMap.measureToTime(clip.end)
+        const endTime = tempoMap.measureToTime(clip.measure + (clip.end - clip.start))
+        const startOffset = startTime - bufferStartTime
 
-        if (endOffset < startOffset) {
-            continue
-        }
-
-        source.start(startTime + startOffset)
-        source.stop(startTime + (endOffset - startOffset))
+        source.start(startTime, startOffset)
+        source.stop(endTime)
     }
 
     const buffer = await context.startRendering()
