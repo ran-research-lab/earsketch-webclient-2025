@@ -12,6 +12,7 @@ import * as bubble from "../bubble/bubbleState"
 import { CAI } from "../cai/CAI"
 import * as cai from "../cai/caiState"
 import * as caiAnalysis from "../cai/analysis"
+import { Chat } from "../cai/Chat"
 import * as collaboration from "../app/collaboration"
 import { Script } from "common"
 import { Curriculum } from "../browser/Curriculum"
@@ -281,10 +282,6 @@ export async function compileCode() {
 
         saveActiveScriptWithRunStatus(userProject.STATUS_UNSUCCESSFUL)
 
-        if (collaboration.active && collaboration.tutoring) {
-            collaboration.sendCompilationRecord(errType)
-        }
-
         if (FLAGS.SHOW_CAI) {
             store.dispatch(cai.compileError(error))
         }
@@ -337,14 +334,11 @@ export async function compileCode() {
             }
 
             console.log("complexityCalculator", report)
+
             if (FLAGS.SHOW_CAI) {
                 store.dispatch(cai.compileCAI([result, language, code]))
             }
         })
-    }
-
-    if (collaboration.active && collaboration.tutoring) {
-        collaboration.sendCompilationRecord("success")
     }
 
     const { bubble } = state
@@ -475,10 +469,13 @@ export const IDE = () => {
                 </Split>
 
                 <div className="h-full" id="curriculum-container" style={bubbleActive && [8, 9].includes(bubblePage) ? { zIndex: 35 } : {}}>
-                    {showCAI
-                        ? <CAI />
-                        : <Curriculum />}
-                    {/* NOTE: The chat window might come back here at some point. */}
+                    {showCAI &&
+                    (FLAGS.SHOW_CHAT
+                        ? <Chat />
+                        : <CAI />)}
+                    <div className={showCAI ? "h-full hidden" : "h-full"}>
+                        <Curriculum />
+                    </div>
                 </div>
             </Split>
         </div>
