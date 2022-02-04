@@ -628,11 +628,7 @@ export const App = () => {
     }
 
     const logout = async () => {
-        dispatch(user.logout())
-        dispatch(sounds.resetUserSounds())
-        dispatch(sounds.resetFavorites())
-        dispatch(sounds.resetAllFilters())
-
+        let keepUnsavedTabs = false
         // save all unsaved open scripts
         try {
             const promise = saveAll()
@@ -640,21 +636,43 @@ export const App = () => {
             if (promise) {
                 userNotification.show(i18n.t("messages:user.allscriptscloud"))
             }
-
-            leaveCollaborationSession()
-
-            userProject.clearUser()
-            userNotification.clearHistory()
-            reporter.logout()
-
-            dispatch(scripts.resetReadOnlyScripts())
-            dispatch(tabs.resetTabs())
-            dispatch(tabs.resetModifiedScripts())
         } catch (error) {
-            if (await confirm({ textKey: "messages:idecontroller.saveallfailed", cancelKey: "keepUnsavedTabs", okKey: "ignore" })) {
-                userProject.clearUser()
+            if (await confirm({ textKey: "messages:idecontroller.saveallfailed", cancelKey: "discardChanges", okKey: "keepUnsavedTabs" })) {
+                keepUnsavedTabs = true
             }
         }
+
+        leaveCollaborationSession()
+
+        userProject.clearUser()
+        userNotification.clearHistory()
+        reporter.logout()
+
+        if (keepUnsavedTabs) {
+            // Close unmodified tabs/scripts.
+            const state = store.getState()
+            const modified = tabs.selectModifiedScripts(state)
+            for (const tab of tabs.selectOpenTabs(state)) {
+                if (!modified.includes(tab)) {
+                    dispatch(tabs.closeAndSwitchTab(tab))
+                }
+            }
+            const regularScripts = scripts.selectRegularScripts(state)
+            const modifiedScripts = Object.entries(regularScripts).filter(([id, _]) => modified.includes(id))
+            dispatch(scripts.setRegularScripts(ESUtils.fromEntries(modifiedScripts)))
+        } else {
+            dispatch(tabs.resetTabs())
+            dispatch(tabs.resetModifiedScripts())
+            dispatch(scripts.resetRegularScripts())
+        }
+
+        dispatch(scripts.resetSharedScripts())
+        dispatch(scripts.resetReadOnlyScripts())
+
+        dispatch(user.logout())
+        dispatch(sounds.resetUserSounds())
+        dispatch(sounds.resetFavorites())
+        dispatch(sounds.resetAllFilters())
 
         // Clear out all the values set at login.
         setUsername("")
@@ -824,7 +842,7 @@ window.onbeforeunload = () => {
         // See https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event.
         const promise = saveAll()
         if (promise) {
-            promise.then(() => userNotification.show(i18n.t("messages:user.allscriptcloud"), "success"))
+            promise.then(() => userNotification.show(i18n.t("messages:user.allscriptscloud"), "success"))
             return ""
         }
     }
