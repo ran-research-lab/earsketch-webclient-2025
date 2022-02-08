@@ -40,6 +40,14 @@ export function form(obj: { [key: string]: string | Blob } = {}) {
 // password in the client.
 
 async function fetchAPI(endpoint: string, init?: RequestInit) {
+    init = {
+        ...init,
+        headers: {
+            ...init?.headers,
+            // add custom headers here
+            "X-EarSketch-Version": `${BUILD_NUM}`.split("-")[0],
+        },
+    }
     try {
         const response = await fetch(URL_DOMAIN + endpoint, init)
         if (!response.ok) {
