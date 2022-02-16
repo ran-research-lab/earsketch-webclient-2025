@@ -100,7 +100,7 @@ module.exports = {
             loader: "exports-loader",
             options: {
                 type: "commonjs",
-                exports: ["Module"],
+                exports: ["single Module"],
             },
         }],
     },
