@@ -28,6 +28,15 @@ test.each([
 })
 
 test.each([
+    { filename: "test.py", expected: ".py" },
+    { filename: "", expected: "" },
+    { filename: "test1234", expected: "" },
+    { filename: "test.js", expected: ".js" },
+])("parseExt($filename)", ({ filename, expected }) => {
+    expect(esutils.parseExt(filename)).toBe(expected)
+})
+
+test.each([
     { value: 0.123456789, expected: 0.12346 },
     { value: 0.123, expected: 0.12300 },
 ])("toPrecision($value)", ({ value, expected }) => {
