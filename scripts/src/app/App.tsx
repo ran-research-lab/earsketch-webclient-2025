@@ -291,7 +291,7 @@ const KeyboardShortcuts = () => {
         <Popover.Button className="text-gray-400 hover:text-gray-300 text-4xl mx-6" title={t("ariaDescriptors:header.shortcuts")} aria-label={t("ariaDescriptors:header.shortcuts")}>
             <i className="icon icon-keyboard" />
         </Popover.Button>
-        <Popover.Panel className="absolute z-10 mt-2 bg-gray-100 shadow-lg p-4 transform -translate-x-1/2 w-max">
+        <Popover.Panel className="absolute z-10 mt-2 bg-gray-100 shadow-lg p-4 -translate-x-1/2 w-max">
             <table>
                 {Object.entries(shortcuts).map(([action, keys], index, arr) =>
                     <tr key={action} className={index === arr.length - 1 ? "" : "border-b"}>
@@ -376,7 +376,7 @@ const NotificationMenu = () => {
             <div className="relative right-1">
                 <NotificationPopup />
             </div>
-            <Popover.Panel className="absolute z-10 mt-2 bg-gray-100 shadow-lg p-4 transform -translate-x-3/4">
+            <Popover.Panel className="absolute z-10 mt-2 bg-gray-100 shadow-lg p-4 -translate-x-3/4">
                 {({ close }) => <NotificationList showHistory={setShowHistory} close={close} />}
             </Popover.Panel>
         </Popover>
@@ -676,7 +676,7 @@ export const App = () => {
         <link rel="stylesheet" type="text/css" href={`scripts/lib/highlightjs/styles/${theme === "dark" ? "monokai-sublime" : "vs"}.css`} />
 
         <div className="flex flex-col justify-start h-screen max-h-screen">
-            {!embedMode && <div id="top-header-nav" className="flex-shrink-0">
+            {!embedMode && <div id="top-header-nav" className="shrink-0">
                 <div id="top-header-nav-left" style={{ WebkitTransform: "translate3d(0,0,0)" }}>
                     <div id="app-title-container" className="pull-left">
                         <img id="app-logo" src="img/ES_logo_extract.svg" alt="EarSketch Logo" />
