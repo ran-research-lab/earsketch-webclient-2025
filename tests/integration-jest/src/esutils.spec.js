@@ -26,3 +26,17 @@ test.each([
 ])("esutils parseName($filename)", ({ filename, expected }) => {
     expect(esutils.parseName(filename)).toBe(expected)
 })
+
+test.each([
+    { value: 0.123456789, expected: 0.12346 },
+    { value: 0.123, expected: 0.12300 },
+])("esutils toPrecision($value)", ({ value, expected }) => {
+    expect(esutils.toPrecision(value)).toBe(expected)
+})
+
+test.each([
+    { value: 0.123456789, digits: 5, expected: 0.12346 },
+    { value: 0.123, digits: 8, expected: 0.12300000 },
+])("esutils toPrecision($value, $digits)", ({ value, expected }) => {
+    expect(esutils.toPrecision(value)).toBe(expected)
+})
