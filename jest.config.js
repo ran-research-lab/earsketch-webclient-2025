@@ -36,4 +36,5 @@ module.exports = {
             outputName: "jest-test-report.xml",
         }],
     ],
+    setupFiles: ["./jest.setup.js"],
 }
