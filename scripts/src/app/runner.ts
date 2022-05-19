@@ -45,6 +45,30 @@ export async function postRun(result: DAWData) {
     await addMetronome(result)
 }
 
+// For interrupting the currently-executing script.
+let pendingCancel = false
+export function cancel() {
+    pendingCancel = true
+}
+
+function checkCancel() {
+    const cancel = pendingCancel
+    pendingCancel = false
+    return cancel
+}
+
+// How often the script yields the main thread (for UI interactions, interrupts, etc.).
+const YIELD_TIME_MS = 100
+
+export async function run(language: "python" | "javascript", code: string) {
+    pendingCancel = false // Clear any old, pending cancellation.
+    const result = await (language === "python" ? runPython : runJavaScript)(code)
+    esconsole("Performing post-execution steps.", ["debug", "runner"])
+    await postRun(result)
+    esconsole("Post-execution steps finished. Return result.", ["debug", "runner"])
+    return result
+}
+
 // Skulpt AST-walking code; based on https://gist.github.com/acbart/ebd2052e62372df79b025aee60ff450e.
 const iterFields = (node: any) => {
     // Return a list of values for each field in `node._fields` that is present on `node`.
@@ -119,7 +143,7 @@ async function handleSoundConstantsPY(code: string) {
 }
 
 // Run a python script.
-export async function runPython(code: string) {
+async function runPython(code: string) {
     Sk.dateSet = false
     Sk.filesLoaded = false
     // Added to reset imports
@@ -129,6 +153,7 @@ export async function runPython(code: string) {
 
     Sk.resetCompiler()
     pythonAPI.setup()
+    Sk.yieldLimit = YIELD_TIME_MS
 
     // special cases with these key functions when import ES module is missing
     // this hack is only for the user guidance
@@ -141,14 +166,33 @@ export async function runPython(code: string) {
         throw new Error("finish()" + i18n.t("messages:interpreter.noimport"))
     })
 
-    // STEP 1: Handle use of audio constants.
     await handleSoundConstantsPY(code)
 
     const lines = code.match(/\n/g) ? code.match(/\n/g)!.length + 1 : 1
     esconsole("Running " + lines + " lines of Python", ["debug", "runner"])
 
-    // STEP 2: Run Python code using Skulpt.
     esconsole("Running script using Skulpt.", ["debug", "runner"])
+    const yieldHandler = (susp: any) => {
+        return new Promise((resolve, reject) => {
+            if (checkCancel()) {
+                // We do this to ensure the exception is raised from within the program.
+                // This allows the user to see where the code was interrupted
+                // (and potentially catch the exception, like a KeyboardInterrupt!).
+                susp.child.child.resume = () => {
+                    throw new Sk.builtin.RuntimeError("User interrupted execution")
+                }
+            }
+            // Use `setTimeout` to give the event loop the chance to run other tasks.
+            setTimeout(() => {
+                try {
+                    resolve(susp.resume())
+                } catch (e) {
+                    reject(e)
+                }
+            }, 0)
+        })
+    }
+
     await Sk.misceval.asyncToPromise(() => {
         try {
             return Sk.importModuleInternal_("<stdin>", false, "__main__", code, true, undefined)
@@ -156,17 +200,10 @@ export async function runPython(code: string) {
             esconsole(err, ["error", "runner"])
             throw err
         }
-    })
-    esconsole("Execution finished. Extracting result.", ["debug", "runner"])
+    }, { "Sk.yield": yieldHandler })
 
-    // STEP 3: Extract result.
-    const result = Sk.ffi.remapToJs(pythonAPI.dawData)
-    // STEP 4: Perform post-execution steps on the result object
-    esconsole("Performing post-execution steps.", ["debug", "runner"])
-    await postRun(result)
-    // STEP 5: finally return the result
-    esconsole("Post-execution steps finished. Return result.", ["debug", "runner"])
-    return result
+    esconsole("Execution finished. Extracting result.", ["debug", "runner"])
+    return Sk.ffi.remapToJs(pythonAPI.dawData)
 }
 
 // Searches for identifiers that might be sound constants, verifies with the server, and inserts into globals.
@@ -214,40 +251,49 @@ function createJsInterpreter(code: string) {
 }
 
 // Compile a javascript script.
-export async function runJavaScript(code: string) {
+async function runJavaScript(code: string) {
     esconsole("Running script using JS-Interpreter.", ["debug", "runner"])
-
     const mainInterpreter = createJsInterpreter(code)
     await handleSoundConstantsJS(code, mainInterpreter)
-    let result
     try {
-        result = await runJsInterpreter(mainInterpreter)
+        return await runJsInterpreter(mainInterpreter)
     } catch (err) {
         const lineNumber = getLineNumber(mainInterpreter, code, err)
         throwErrorWithLineNumber(err, lineNumber as number)
     }
-    esconsole("Performing post-execution steps.", ["debug", "runner"])
-    await postRun(result)
-    esconsole("Post-execution steps finished. Return result.", ["debug", "runner"])
-    return result
 }
 
 function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-// This is a helper function for running JS-Interpreter to handle
-// breaks in execution due to asynchronous calls. When an asynchronous
-// call is received, the interpreter will break execution and return true,
-// so we'll set a timeout to wait 200 ms and then try again until the
-// asynchronous calls are finished.
-// TODO: Why 200 ms? Can this be simplified?
+// This is a helper function for running JS-Interpreter to allow for script
+// interruption and to handle breaks in execution due to asynchronous calls.
 async function runJsInterpreter(interpreter: any) {
-    while (interpreter.run()) {
+    const runSteps = () => {
+        // Run interpreter for up to `YIELD_TIME_MS` milliseconds.
+        // Returns early if blocked on async call or if script finishes.
+        const start = Date.now()
+        while ((Date.now() - start < YIELD_TIME_MS) && !interpreter.paused_) {
+            if (!interpreter.step()) return false
+        }
+        return true
+    }
+
+    while (runSteps()) {
+        if (checkCancel()) {
+            // Raise an exception from within the program.
+            const error = interpreter.createObject(interpreter.ERROR)
+            interpreter.setProperty(error, "name", "InterruptError", Interpreter.NONENUMERABLE_DESCRIPTOR)
+            interpreter.setProperty(error, "message", "User interrupted execution", Interpreter.NONENUMERABLE_DESCRIPTOR)
+            interpreter.unwind(Interpreter.Completion.THROW, error, undefined)
+            interpreter.paused_ = false
+        }
         if (javascriptAPI.asyncError) {
             throw javascriptAPI.popAsyncError()
         }
-        await sleep(200)
+        // Give the event loop the chance to run other tasks.
+        await sleep(0)
     }
     const result = javascriptAPI.dawData
     esconsole("Execution finished. Extracting result.", ["debug", "runner"])
