@@ -23,6 +23,7 @@ import * as ESUtils from "../esutils"
 import { IDE, openShare } from "../ide/IDE"
 import * as layout from "../ide/layoutState"
 import { LocaleSelector } from "../top/LocaleSelector"
+import { openModal } from "./modal"
 import { NotificationBar, NotificationHistory, NotificationList, NotificationPopup } from "../user/Notifications"
 import { ProfileEditor } from "./ProfileEditor"
 import { RenameScript, RenameSound } from "./Rename"
@@ -32,7 +33,8 @@ import { ScriptHistory } from "./ScriptHistory"
 import { ScriptShare } from "./ScriptShare"
 import * as scripts from "../browser/scriptsState"
 import { ScriptDropdownMenu } from "../browser/ScriptsMenus"
-import * as sounds from "../browser/soundsState"
+import * as sounds from "../browser/Sounds"
+import * as soundsState from "../browser/soundsState"
 import { SoundUploader } from "./SoundUploader"
 import store, { persistor } from "../reducers"
 import * as tabs from "../ide/tabState"
@@ -43,6 +45,11 @@ import { ModalBody, ModalFooter, ModalHeader, Prompt } from "../Utils"
 
 import licenses_ from "../data/licenses.json"
 
+// TODO: Temporary workaround for autograders 1 & 3, which replace the prompt function.
+(window as any).esPrompt = async (message: string) => {
+    return (await openModal(Prompt, { message })) ?? ""
+}
+
 const licenses: { [key: string]: any } = {}
 for (const license of licenses_) {
     licenses[(license as any).id] = license
@@ -50,43 +57,31 @@ for (const license of licenses_) {
 
 const FONT_SIZES = [10, 12, 14, 18, 24, 36]
 
-// There is a little type magic here to accomplish three things:
-// 1. Make the compiler check that `props` really matches the props expected by `modal`.
-// 2. Allow omitting the `props` argument when the modal only expects `close`, but require it if the modal expects additional props.
-// 3. Provide the correct return value: the Promise should resolve to whatever type that `modal` says `close` takes.
-//    For example, if `modal` specifies that close has type `(foo?: number) => void`, then this should return `Promise<number | undefined>`.
-//    Note that the promise can always resolve to `undefined`, because the user can always dismiss the modal without completing it.
-type NoPropModal = (props: { close: (payload?: any) => void } & { [key: string]: never }) => JSX.Element
+curriculum.callbacks.redirect = () => userNotification.show("Failed to load curriculum link. Redirecting to welcome page.", "failure2", 2)
 
-export function openModal<T extends NoPropModal>(modal: T, props?: undefined): Promise<Parameters<Parameters<T>[0]["close"]>[0]>
-export function openModal<T extends appState.Modal>(modal: T, props: Omit<Parameters<T>[0], "close">): Promise<Parameters<Parameters<T>[0]["close"]>[0]>
-export function openModal<T extends appState.Modal>(modal: T, props?: Omit<Parameters<T>[0], "close">): Promise<Parameters<Parameters<T>[0]["close"]>[0]> {
-    return new Promise(resolve => {
-        const wrappedModal = ({ close }: { close: (payload?: any) => void }) => {
-            let closed = false
-            const closeWrapper = (payload?: any) => {
-                if (!closed) {
-                    closed = true
-                    resolve(payload)
-                    close()
-                }
-            }
-            // Close with no payload on unmount (i.e. modal was dismissed without completion).
-            useEffect(() => closeWrapper, [])
-            return modal({ ...props, close: closeWrapper })
-        }
-        store.dispatch(appState.setModal(wrappedModal))
-    })
-}
-
-// TODO: Temporary workaround for autograders 1 & 3, which replace the prompt function.
-(window as any).esPrompt = async (message: string) => {
-    return (await openModal(Prompt, { message })) ?? ""
-}
-
-export function renameSound(sound: SoundEntity) {
+function renameSound(sound: SoundEntity) {
     openModal(RenameSound, { sound })
 }
+
+async function deleteSound(sound: SoundEntity) {
+    if (await confirm({ textKey: "messages:confirm.deleteSound", textReplacements: { soundName: sound.name }, okKey: "script.delete", type: "danger" })) {
+        await userProject.deleteSound(sound.name)
+        store.dispatch(soundsState.deleteLocalUserSound(sound.name))
+        audioLibrary.clearCache()
+    }
+}
+
+function openUploadWindow() {
+    if (userProject.isLoggedIn()) {
+        openModal(SoundUploader)
+    } else {
+        userNotification.show(i18n.t("messages:general.unauthenticated"), "failure1")
+    }
+}
+
+sounds.callbacks.rename = renameSound
+sounds.callbacks.delete = deleteSound
+sounds.callbacks.upload = openUploadWindow
 
 export async function renameScript(script: Script) {
     const name = await openModal(RenameScript, { script })
@@ -198,14 +193,6 @@ export async function importScript(script: Script) {
     }
 }
 
-export async function deleteSound(sound: SoundEntity) {
-    if (await confirm({ textKey: "messages:confirm.deleteSound", textReplacements: { soundName: sound.name }, okKey: "script.delete", type: "danger" })) {
-        await userProject.deleteSound(sound.name)
-        store.dispatch(sounds.deleteLocalUserSound(sound.name))
-        audioLibrary.clearCache()
-    }
-}
-
 export async function closeAllTabs() {
     if (await confirm({ textKey: "messages:idecontroller.closealltabs", okKey: "tabs.closeAll" })) {
         try {
@@ -219,17 +206,10 @@ export async function closeAllTabs() {
 }
 
 export async function shareScript(script: Script) {
+    script = Object.assign({}, script) // copy to avoid mutating original
     await userProject.saveScript(script.name, script.source_code)
     store.dispatch(tabs.removeModifiedScript(script.shareid))
     openModal(ScriptShare, { script, licenses })
-}
-
-export function openUploadWindow() {
-    if (userProject.isLoggedIn()) {
-        openModal(SoundUploader)
-    } else {
-        userNotification.show(i18n.t("messages:general.unauthenticated"), "failure1")
-    }
 }
 
 export function openSharedScript(shareID: string) {
@@ -372,7 +352,7 @@ const NotificationMenu = () => {
     const [showHistory, setShowHistory] = useState(false)
 
     return <>
-        {showHistory && <NotificationHistory close={() => setShowHistory(false)} />}
+        {showHistory && <NotificationHistory openSharedScript={openSharedScript} close={() => setShowHistory(false)} />}
         <Popover>
             <Popover.Button className="text-gray-400 hover:text-gray-300 text-2xl mx-3 relative" title={t("ariaDescriptors:header.toggleNotifications")}>
                 <i className="icon icon-bell" />
@@ -382,7 +362,12 @@ const NotificationMenu = () => {
                 <NotificationPopup />
             </div>
             <Popover.Panel className="absolute z-10 mt-1 bg-gray-100 shadow-lg p-2 -translate-x-3/4">
-                {({ close }) => <NotificationList showHistory={setShowHistory} close={close} />}
+                {({ close }) => <NotificationList
+                    openSharedScript={openSharedScript}
+                    openCollaborativeScript={openCollaborativeScript}
+                    showHistory={setShowHistory}
+                    close={close}
+                />}
             </Popover.Panel>
         </Popover>
     </>
@@ -450,12 +435,12 @@ const Footer = () => {
 }
 
 function setup() {
-    store.dispatch(sounds.getDefaultSounds())
+    store.dispatch(soundsState.getDefaultSounds())
     if (FLAGS.SHOW_FEATURED_SOUNDS) {
-        store.dispatch(sounds.setFeaturedSoundVisibility(true))
+        store.dispatch(soundsState.setFeaturedSoundVisibility(true))
     }
     if (FLAGS.FEATURED_ARTISTS && FLAGS.FEATURED_ARTISTS.length) {
-        store.dispatch(sounds.setFeaturedArtists(FLAGS.FEATURED_ARTISTS))
+        store.dispatch(soundsState.setFeaturedArtists(FLAGS.FEATURED_ARTISTS))
     }
 
     esconsole.updateLevelsFromURLParameters()
@@ -584,8 +569,8 @@ export const App = () => {
 
         store.dispatch(user.login({ username, token }))
 
-        store.dispatch(sounds.getUserSounds(username))
-        store.dispatch(sounds.getFavorites(token))
+        store.dispatch(soundsState.getUserSounds(username))
+        store.dispatch(soundsState.getFavorites(token))
 
         // Always override with the returned username in case the letter cases mismatch.
         setUsername(username)
@@ -648,9 +633,9 @@ export const App = () => {
         dispatch(scripts.resetReadOnlyScripts())
 
         dispatch(user.logout())
-        dispatch(sounds.resetUserSounds())
-        dispatch(sounds.resetFavorites())
-        dispatch(sounds.resetAllFilters())
+        dispatch(soundsState.resetUserSounds())
+        dispatch(soundsState.resetFavorites())
+        dispatch(soundsState.resetAllFilters())
 
         // Clear out all the values set at login.
         setUsername("")
@@ -729,7 +714,16 @@ export const App = () => {
             <Footer />
         </div>
         <Bubble />
-        <ScriptDropdownMenu />
+        <ScriptDropdownMenu
+            delete={deleteScript}
+            deleteShared={deleteSharedScript}
+            download={downloadScript}
+            openIndicator={openCodeIndicator}
+            openHistory={openScriptHistory}
+            rename={renameScript}
+            share={shareScript}
+            submit={submitToCompetition}
+        />
         <ModalContainer />
     </div>
 }

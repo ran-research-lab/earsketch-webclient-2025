@@ -7,11 +7,14 @@ import * as appState from "../app/appState"
 import * as user from "../user/userState"
 import * as editor from "./Editor"
 import * as ide from "./ideState"
-import { compileCode } from "./IDE"
 import * as tabs from "./tabState"
 import store from "../reducers"
 import * as scripts from "../browser/scriptsState"
 import reporter from "../app/reporter"
+
+export const callbacks = {
+    runScript: () => {},
+}
 
 const UndoRedoButtons = () => {
     const enabled = "cursor-pointer text-black dark:text-white"
@@ -67,7 +70,7 @@ export const EditorHeader = ({ running, cancel }: { running: boolean, cancel: ()
     const button = [{
         id: "run-button",
         title: t("editor.run"),
-        action: compileCode,
+        action: callbacks.runScript,
         fgClass: "text-green-600",
         bgClass: "bg-green-700",
         icon: "icon-arrow-right22",
@@ -130,7 +133,7 @@ export const EditorHeader = ({ running, cancel }: { running: boolean, cancel: ()
                             `}
                         onClick={() => {
                             const unsavedScript = scripts.selectRegularScripts(store.getState())[activeTab]
-                            shareScript(Object.assign({}, unsavedScript))
+                            shareScript(unsavedScript)
                         }}
                         title={t("script.share")}
                         aria-label={t("script.share")}

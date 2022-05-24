@@ -2,10 +2,8 @@ import { createSlice, createAsyncThunk, createSelector } from "@reduxjs/toolkit"
 import lunr from "lunr"
 
 import esconsole from "../esconsole"
-import { importScript } from "../ide/IDE"
 import * as layout from "../ide/layoutState"
 import store, { RootState, ThunkAPI, AppDispatch } from "../reducers"
-import * as userNotification from "../user/notification"
 
 const CURRICULUM_DIR = "../curriculum"
 
@@ -14,6 +12,11 @@ let locationToPage: { [location: string]: number } = {}
 let locationToUrl: { [key: string]: string } = {}
 let urlToLocation: { [key: string]: number[] } = {}
 let idx: lunr.Index | null = null
+
+export const callbacks = {
+    import: (_: string) => {},
+    redirect: () => {},
+}
 
 export const fetchLocale = createAsyncThunk<any, any, ThunkAPI>("curriculum/fetchLocale", async ({ location, url }, { dispatch, getState }) => {
     dispatch(curriculumSlice.actions.setContentCache({}))
@@ -103,7 +106,7 @@ const processContent = (location: number[], html: string, dispatch: AppDispatch)
 
     // Connect copy buttons.
     root.querySelectorAll(".copy-btn-python,.copy-btn-javascript").forEach((button: HTMLButtonElement) => {
-        button.onclick = () => importScript(button.nextSibling!.textContent!)
+        button.onclick = () => callbacks.import(button.nextSibling!.textContent!)
     })
 
     // Fix internal cross-references.
@@ -444,10 +447,10 @@ const fixLocation = (href: string | undefined, loc: number[] | undefined) => {
         // if loc is still undefined then this is a request for an un-indexed page, default them to the welcome page
         loc = [0]
         href = undefined as any
-        userNotification.show("Failed to load curriculum link. Redirecting to welcome page.", "failure2", 2)
+        callbacks.redirect()
     }
 
-    href ??= locationToUrl[loc.join(",")]
+    href = href ?? locationToUrl[loc.join(",")]
 
     if (loc.length === 2 && toc[loc[0]].chapters) {
         const currChapter = toc[loc[0]].chapters![loc[1]]

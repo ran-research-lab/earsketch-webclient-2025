@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from "react-redux"
 import { useTranslation } from "react-i18next"
 import Split from "react-split"
 
-import { openModal } from "../app/App"
+import { closeAllTabs, shareScript } from "../app/App"
 import * as appState from "../app/appState"
 import { Browser } from "../browser/Browser"
 import * as bubble from "../bubble/bubbleState"
@@ -17,20 +17,22 @@ import * as collaboration from "../app/collaboration"
 import { Script } from "common"
 import { Curriculum } from "../browser/Curriculum"
 import * as curriculum from "../browser/curriculumState"
-import { DAW, setDAWData } from "../daw/DAW"
+import { callbacks as dawCallbacks, DAW, setDAWData } from "../daw/DAW"
 import { Editor } from "./Editor"
-import { EditorHeader } from "./EditorHeader"
+import { callbacks as editorCallbacks, EditorHeader } from "./EditorHeader"
 import esconsole from "../esconsole"
 import * as ESUtils from "../esutils"
 import { setReady, dismissBubble } from "../bubble/bubbleState"
-import * as scripts from "../browser/scriptsState"
 import * as editor from "./Editor"
 import * as ide from "./ideState"
 import * as layout from "./layoutState"
+import { openModal } from "../app/modal"
 import reporter from "../app/reporter"
 import * as runner from "../app/runner"
 import { ScriptCreator } from "../app/ScriptCreator"
 import store from "../reducers"
+import * as scripts from "../browser/Scripts"
+import * as scriptsState from "../browser/scriptsState"
 import { Tabs } from "./Tabs"
 import * as tabs from "./tabState"
 import * as ideConsole from "./console"
@@ -58,9 +60,12 @@ export async function createScript() {
     }
 }
 
+scripts.callbacks.create = createScript
+scripts.callbacks.share = shareScript
+
 function saveActiveScriptWithRunStatus(status: number) {
     const activeTabID = tabs.selectActiveTabID(store.getState())!
-    const script = activeTabID === null ? null : scripts.selectAllScripts(store.getState())[activeTabID]
+    const script = activeTabID === null ? null : scriptsState.selectAllScripts(store.getState())[activeTabID]
 
     if (script?.collaborative) {
         script && collaboration.saveScript(script.shareid)
@@ -102,7 +107,7 @@ function setCommandEnabled(editor: any, name: string, enabled: boolean) {
 
 function switchToShareMode() {
     editor.ace.focus()
-    store.dispatch(scripts.setFeatureSharedScript(true))
+    store.dispatch(scriptsState.setFeatureSharedScript(true))
 }
 
 let setLoading: (loading: boolean) => void
@@ -120,7 +125,7 @@ export function initEditor() {
         },
         exec() {
             const activeTabID = tabs.selectActiveTabID(store.getState())!
-            const script = activeTabID === null ? null : scripts.selectAllScripts(store.getState())[activeTabID]
+            const script = activeTabID === null ? null : scriptsState.selectAllScripts(store.getState())[activeTabID]
 
             if (!script?.saved) {
                 store.dispatch(tabs.saveScriptIfModified(activeTabID))
@@ -160,7 +165,7 @@ export function initEditor() {
             mac: "Command-Enter",
         },
         exec() {
-            compileCode()
+            runScript()
         },
     })
 
@@ -219,7 +224,7 @@ export async function openShare(shareid: string) {
 
             if (isEmbedded) embeddedScriptLoaded(result.username, result.name, result.shareid)
 
-            const regularScripts = scripts.selectRegularScripts(store.getState())
+            const regularScripts = scriptsState.selectRegularScripts(store.getState())
 
             if (result.username === userProject.getUsername() && shareid in regularScripts) {
                 // The shared script belongs to the logged-in user and exists in their scripts.
@@ -234,8 +239,8 @@ export async function openShare(shareid: string) {
                 }
 
                 // Manually remove the user-owned shared script from the browser.
-                const { [shareid]: _, ...sharedScripts } = scripts.selectSharedScripts(store.getState())
-                store.dispatch(scripts.setSharedScripts(sharedScripts))
+                const { [shareid]: _, ...sharedScripts } = scriptsState.selectSharedScripts(store.getState())
+                store.dispatch(scriptsState.setSharedScripts(sharedScripts))
             } else {
                 // The shared script doesn't belong to the logged-in user (or is a locked version from the past).
                 switchToShareMode()
@@ -258,8 +263,10 @@ export async function openShare(shareid: string) {
     }
 }
 
+userProject.callbacks.openShare = openShare
+
 // For curriculum pages.
-export function importScript(key: string) {
+function importScript(key: string) {
     const result = /script_name: (.*)/.exec(key)
     let scriptName
     if (result && result[1]) {
@@ -280,13 +287,15 @@ export function importScript(key: string) {
         readonly: true,
     }
 
-    store.dispatch(scripts.addReadOnlyScript(fakeScript))
+    store.dispatch(scriptsState.addReadOnlyScript(fakeScript))
     editor.ace.focus()
     store.dispatch(tabs.setActiveTabAndEditor(fakeScript.shareid))
 }
 
-// Compile code in the editor and broadcast the result to all scopes.
-export async function compileCode() {
+curriculum.callbacks.import = importScript
+
+// Run script in the editor and propagate the DAW data it generates.
+export async function runScript() {
     if (isWaitingForServerResponse) return
 
     isWaitingForServerResponse = true
@@ -334,7 +343,7 @@ export async function compileCode() {
     const duration = Date.now() - startTime
     setLoading(false)
     if (result) {
-        esconsole("Code compiled, updating DAW.", "ide")
+        esconsole("Ran script, updating DAW.", "ide")
         setDAWData(result)
     }
     reporter.compile(language, true, undefined, duration)
@@ -388,6 +397,8 @@ export async function compileCode() {
         store.dispatch(setReady(true))
     }
 }
+
+dawCallbacks.runScript = editorCallbacks.runScript = runScript
 
 export const IDE = () => {
     const dispatch = useDispatch()
@@ -470,7 +481,7 @@ export const IDE = () => {
 
                         <div className="grow h-full overflow-y-hidden">
                             <div className={"h-full flex flex-col" + (numTabs === 0 ? " hidden" : "")}>
-                                <Tabs />
+                                <Tabs create={createScript} closeAll={closeAllTabs} />
                                 {embedMode && <div className="embedded-script-info h-auto" >
                                     <p>Script: {embeddedScriptName}</p>
                                     <p>By: {embeddedScriptUsername}</p>
