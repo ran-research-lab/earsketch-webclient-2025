@@ -10,7 +10,7 @@ import * as appState from "../app/appState"
 import * as audioLibrary from "./audiolibrary"
 import { Bubble } from "../bubble/Bubble"
 import * as bubble from "../bubble/bubbleState"
-import * as cai from "../cai/caiState"
+import * as caiThunks from "../cai/caiThunks"
 import * as collaboration from "./collaboration"
 import { Script, SoundEntity } from "common"
 import { CompetitionSubmission } from "./CompetitionSubmission"
@@ -35,12 +35,15 @@ import * as scripts from "../browser/scriptsState"
 import { ScriptDropdownMenu } from "../browser/ScriptsMenus"
 import * as sounds from "../browser/Sounds"
 import * as soundsState from "../browser/soundsState"
+import * as soundsThunks from "../browser/soundsThunks"
 import { SoundUploader } from "./SoundUploader"
 import store, { persistor } from "../reducers"
 import * as tabs from "../ide/tabState"
+import * as tabThunks from "../ide/tabThunks"
 import * as user from "../user/userState"
 import * as userNotification from "../user/notification"
 import * as userProject from "./userProject"
+import * as request from "../request"
 import { ModalBody, ModalFooter, ModalHeader, Prompt } from "../Utils"
 
 import licenses_ from "../data/licenses.json"
@@ -58,6 +61,8 @@ for (const license of licenses_) {
 const FONT_SIZES = [10, 12, 14, 18, 24, 36]
 
 curriculum.callbacks.redirect = () => userNotification.show("Failed to load curriculum link. Redirecting to welcome page.", "failure2", 2)
+// TODO: Move this back to IDE once userProject circular imports are resolved.
+userProject.callbacks.openShare = openShare
 
 function renameSound(sound: SoundEntity) {
     openModal(RenameSound, { sound })
@@ -66,7 +71,7 @@ function renameSound(sound: SoundEntity) {
 async function deleteSound(sound: SoundEntity) {
     if (await confirm({ textKey: "messages:confirm.deleteSound", textReplacements: { soundName: sound.name }, okKey: "script.delete", type: "danger" })) {
         await userProject.deleteSound(sound.name)
-        store.dispatch(soundsState.deleteLocalUserSound(sound.name))
+        store.dispatch(soundsThunks.deleteLocalUserSound(sound.name))
         audioLibrary.clearCache()
     }
 }
@@ -140,7 +145,7 @@ export async function deleteScript(script: Script) {
         await userProject.deleteScript(script.shareid)
         reporter.deleteScript()
 
-        store.dispatch(tabs.closeDeletedScript(script.shareid))
+        store.dispatch(tabThunks.closeDeletedScript(script.shareid))
         store.dispatch(tabs.removeModifiedScript(script.shareid))
     }
 }
@@ -154,7 +159,7 @@ export async function deleteSharedScript(script: Script) {
             // Apply state change first
             const { [script.shareid]: _, ...sharedScripts } = scripts.selectSharedScripts(store.getState())
             store.dispatch(scripts.setSharedScripts(sharedScripts))
-            store.dispatch(tabs.closeDeletedScript(script.shareid))
+            store.dispatch(tabThunks.closeDeletedScript(script.shareid))
             store.dispatch(tabs.removeModifiedScript(script.shareid))
             // userProject.getSharedScripts in this routine is not synchronous to websocket:leaveCollaboration
             collaboration.leaveCollaboration(script.shareid, userProject.getUsername(), false)
@@ -162,7 +167,7 @@ export async function deleteSharedScript(script: Script) {
     } else {
         if (await confirm({ textKey: "messages:confirm.deleteSharedScript", textReplacements: { scriptName: script.name }, okKey: "script.delete", type: "danger" })) {
             await userProject.deleteSharedScript(script.shareid)
-            store.dispatch(tabs.closeDeletedScript(script.shareid))
+            store.dispatch(tabThunks.closeDeletedScript(script.shareid))
             store.dispatch(tabs.removeModifiedScript(script.shareid))
         }
     }
@@ -189,7 +194,7 @@ export async function importScript(script: Script) {
     store.dispatch(tabs.closeTab(script.shareid))
 
     if (openTabs.includes(script.shareid)) {
-        store.dispatch(tabs.setActiveTabAndEditor(imported.shareid))
+        store.dispatch(tabThunks.setActiveTabAndEditor(imported.shareid))
     }
 }
 
@@ -198,7 +203,7 @@ export async function closeAllTabs() {
         try {
             await saveAll()
             userNotification.show(i18n.t("messages:user.allscriptscloud"))
-            store.dispatch(tabs.closeAllTabs())
+            store.dispatch(tabThunks.closeAllTabs())
         } catch {
             userNotification.show(i18n.t("messages:idecontroller.saveallfailed"), "failure1")
         }
@@ -215,7 +220,7 @@ export async function shareScript(script: Script) {
 export function openSharedScript(shareID: string) {
     esconsole("opening a shared script: " + shareID, "main")
     openShare(shareID).then(() => {
-        store.dispatch(tabs.setActiveTabAndEditor(shareID))
+        store.dispatch(tabThunks.setActiveTabAndEditor(shareID))
     })
 }
 
@@ -223,7 +228,7 @@ export function openCollaborativeScript(shareID: string) {
     const sharedScripts = scripts.selectSharedScripts(store.getState())
     if (sharedScripts[shareID] && sharedScripts[shareID].collaborative) {
         openSharedScript(shareID)
-        store.dispatch(tabs.setActiveTabAndEditor(shareID))
+        store.dispatch(tabThunks.setActiveTabAndEditor(shareID))
     } else {
         userNotification.show("Error opening the collaborative script! You may no longer the access. Try refreshing the page and checking the shared scripts browser", "failure1")
     }
@@ -435,7 +440,7 @@ const Footer = () => {
 }
 
 function setup() {
-    store.dispatch(soundsState.getDefaultSounds())
+    store.dispatch(soundsThunks.getDefaultSounds())
     if (FLAGS.SHOW_FEATURED_SOUNDS) {
         store.dispatch(soundsState.setFeaturedSoundVisibility(true))
     }
@@ -520,7 +525,7 @@ export const App = () => {
                 const allScripts = scripts.selectAllScripts(store.getState())
                 for (const scriptID of openTabs) {
                     if (!allScripts[scriptID]) {
-                        store.dispatch(tabs.closeAndSwitchTab(scriptID))
+                        store.dispatch(tabThunks.closeAndSwitchTab(scriptID))
                     }
                 }
                 // Show bubble tutorial when not opening a share link or in a CAI study mode.
@@ -546,7 +551,7 @@ export const App = () => {
 
         let token
         try {
-            token = await userProject.getBasicAuth("/users/token", username, password)
+            token = await request.getBasicAuth("/users/token", username, password)
         } catch (error) {
             userNotification.show(i18n.t("messages:general.loginfailure"), "failure1", 3.5)
             esconsole(error, ["main", "login"])
@@ -569,8 +574,8 @@ export const App = () => {
 
         store.dispatch(user.login({ username, token }))
 
-        store.dispatch(soundsState.getUserSounds(username))
-        store.dispatch(soundsState.getFavorites(token))
+        store.dispatch(soundsThunks.getUserSounds(username))
+        store.dispatch(soundsThunks.getFavorites(token))
 
         // Always override with the returned username in case the letter cases mismatch.
         setUsername(username)
@@ -586,7 +591,7 @@ export const App = () => {
             setLoggedIn(true)
             userNotification.show(i18n.t("messages:general.loginsuccess"), "history", 0.5)
             const activeTabID = tabs.selectActiveTabID(store.getState())
-            activeTabID && store.dispatch(tabs.setActiveTabAndEditor(activeTabID))
+            activeTabID && store.dispatch(tabThunks.setActiveTabAndEditor(activeTabID))
         }
     }
 
@@ -617,7 +622,7 @@ export const App = () => {
             const modified = tabs.selectModifiedScripts(state)
             for (const tab of tabs.selectOpenTabs(state)) {
                 if (!modified.includes(tab)) {
-                    dispatch(tabs.closeAndSwitchTab(tab))
+                    dispatch(tabThunks.closeAndSwitchTab(tab))
                 }
             }
             const regularScripts = scripts.selectRegularScripts(state)
@@ -650,12 +655,12 @@ export const App = () => {
     const toggleCAIWindow = () => {
         if (!showCAI) {
             dispatch(layout.setEast({ open: true, kind: "CAI" }))
-            dispatch(cai.closeCurriculum())
+            dispatch(caiThunks.closeCurriculum())
             document.getElementById("caiButton")!.classList.remove("flashNavButton")
-            dispatch(cai.autoScrollCAI())
+            dispatch(caiThunks.autoScrollCAI())
         } else {
             dispatch(layout.setEast({ kind: "CURRICULUM" }))
-            dispatch(cai.curriculumPage([curriculum.selectCurrentLocation(store.getState()), curriculum.selectPageTitle(store.getState())]))
+            dispatch(caiThunks.curriculumPage([curriculum.selectCurrentLocation(store.getState()), curriculum.selectPageTitle(store.getState())]))
         }
     }
 

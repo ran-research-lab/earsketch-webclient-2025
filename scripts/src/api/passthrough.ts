@@ -10,15 +10,15 @@ import * as analyzer from "../model/analyzer"
 import * as applyEffects from "../model/applyeffects"
 import audioContext from "../app/audiocontext"
 import * as audioLibrary from "../app/audiolibrary"
-import { SoundEntity } from "common"
+import { Clip, DAWData, EffectRange, Track, SoundEntity } from "common"
 import esconsole from "../esconsole"
 import * as ESUtils from "../esutils"
 import * as renderer from "../app/renderer"
 import * as userConsole from "../ide/console"
-import { Clip, DAWData, EffectRange, Track } from "../app/player"
 import * as runner from "../app/runner"
 import { TempoMap } from "../app/tempo"
 import * as userProject from "../app/userProject"
+import * as request from "../request"
 
 class ValueError extends Error {
     constructor(message: string | undefined) {
@@ -709,7 +709,7 @@ export function importImage(result: DAWData, imageURL: string, nrows: number, nc
     }
 
     // make the HTTP request
-    return userProject.post("/thirdparty/stringifyimage", {
+    return request.post("/thirdparty/stringifyimage", {
         image_url: imageURL,
         width: "" + nrows,
         height: "" + ncols,
@@ -735,7 +735,7 @@ export function importFile(result: DAWData, fileURL: string) {
     }
 
     // make the HTTP request
-    return userProject.post("/thirdparty/stringifyfile", { file_url: fileURL }).then(response => {
+    return request.post("/thirdparty/stringifyfile", { file_url: fileURL }).then(response => {
         esconsole("File data received: " + response, "PT")
         return response
     }).catch(() => {

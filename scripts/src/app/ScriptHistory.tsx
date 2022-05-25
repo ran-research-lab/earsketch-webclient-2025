@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from "react"
 
 import * as collaboration from "./collaboration"
-import { Script } from "common"
+import { DAWData, Script } from "common"
 import * as runner from "./runner"
 import * as ESUtils from "../esutils"
 import reporter from "./reporter"
 import * as tabs from "../ide/tabState"
+import { setActiveTabAndEditor } from "../ide/tabThunks"
 import * as scripts from "../browser/scriptsState"
 import * as userProject from "./userProject"
 import { useSelector, useDispatch } from "react-redux"
 import { Diff } from "./Diff"
-import { DAWData } from "./player"
 import { DAW, setDAWData } from "../daw/DAW"
 import { useTranslation } from "react-i18next"
 import { ModalBody, ModalHeader } from "../Utils"
@@ -90,7 +90,7 @@ export const ScriptHistory = ({ script, allowRevert, close }: { script: Script, 
                 if (openTabs.includes(script.shareid)) {
                     tabs.deleteEditorSession(script.shareid)
                     if (script.shareid === activeTabID) {
-                        dispatch(tabs.setActiveTabAndEditor(script.shareid))
+                        dispatch(setActiveTabAndEditor(script.shareid))
                     }
                 }
             })

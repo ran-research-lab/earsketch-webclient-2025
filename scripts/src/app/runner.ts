@@ -2,6 +2,7 @@
 import Interpreter from "js-interpreter"
 import * as acorn from "acorn"
 import * as walk from "acorn-walk"
+import i18n from "i18next"
 
 import audioContext from "./audiocontext"
 import * as audioLibrary from "./audiolibrary"
@@ -10,9 +11,9 @@ import * as pythonAPI from "../api/earsketch.py"
 import esconsole from "../esconsole"
 import * as ESUtils from "../esutils"
 import * as userConsole from "../ide/console"
-import { Clip, ClipSlice, DAWData, Track } from "./player"
-import i18n from "i18next"
-import { TempoMap, timestretch } from "./tempo"
+import { Clip, ClipSlice, DAWData, Track } from "common"
+import { TempoMap } from "./tempo"
+import { timestretch } from "./timestretch"
 
 // After running code, go through each clip, load the audio file and
 // replace looped ones with multiple clips. Why? Because we don't know
@@ -531,7 +532,7 @@ function fixClips(result: DAWData, buffers: { [key: string]: AudioBuffer }) {
 
             // if the clip end value is 0, set it to the duration (one repeat)
             // this fixes API calls insertMedia, etc. that don't know the clip length ahead of time
-            clip.end ||= duration + 1
+            clip.end = clip.end || (duration + 1)
 
             // update result length
             const endMeasure = clip.measure + (clip.end - clip.start)
