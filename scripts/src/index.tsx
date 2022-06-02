@@ -4,7 +4,6 @@ import "./tailwind.css"
 import "./i18n"
 
 // TODO: These import globals for now.
-import "highlight"
 import "jsDiffLib"
 import "jsDiffView"
 import "kali"
@@ -23,7 +22,7 @@ import "ace-builds/src-noconflict/ext-language_tools"
 
 // https://github.com/ajaxorg/ace/blob/master/demo/webpack/demo.js#L12
 // eslint-disable-next-line import/no-webpack-loader-syntax
-import jsWorkerUrl from "file-loader!aceJsWorker"
+import jsWorkerUrl from "file-loader!ace-builds/src-noconflict/worker-javascript"
 
 import * as ESUtils from "./esutils"
 
@@ -34,6 +33,7 @@ import React from "react"
 import ReactDOM from "react-dom"
 import { Provider } from "react-redux"
 import { PersistGate } from "redux-persist/integration/react"
+import * as SC from "soundcloud"
 
 import { App } from "./app/App"
 import store, { persistor } from "./reducers"
