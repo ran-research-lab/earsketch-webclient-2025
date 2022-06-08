@@ -186,6 +186,32 @@ Cypress.Commands.add("interceptScriptSave", (scriptName, responsePayload = {
     ).as("scripts_save")
 })
 
+Cypress.Commands.add("interceptUsersEdit", () => {
+    cy.intercept(
+        {
+            hostname: API_HOST,
+            method: "POST",
+            path: "/EarSketchWS/users/edit",
+        },
+        {}
+    ).as("users_edit")
+})
+
+Cypress.Commands.add("interceptModifyPassword", (userPassword, responsePayload = {
+    password: userPassword,
+}) => {
+    cy.intercept(
+        {
+            hostname: API_HOST,
+            method: "POST",
+            path: "/EarSketchWS/users/modifypwd",
+        },
+        {
+            body: responsePayload,
+        }
+    ).as("users_modifypwd")
+})
+
 Cypress.Commands.add("toggleCurriculumLanguage", () => {
     cy.get("button[title='Switch script language to javascript']").click()
     // Now we need to verify this
