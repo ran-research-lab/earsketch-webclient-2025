@@ -1,14 +1,12 @@
 // Global imports of CSS
 import "../css/earsketch/allstyles.less"
 import "./tailwind.css"
-import "./i18n"
+import "../fonts/icomoon_ultimate/style.css"
 
 // TODO: These import globals for now.
 import "jsDiffLib"
 import "jsDiffView"
 import "kali"
-
-import "../fonts/icomoon_ultimate/style.css"
 
 import * as ace from "ace-builds"
 import "ace-builds/src-noconflict/theme-monokai"
@@ -26,7 +24,8 @@ import jsWorkerUrl from "file-loader!ace-builds/src-noconflict/worker-javascript
 
 import * as ESUtils from "./esutils"
 
-// NOTE: We import this purely for its side-effects (registering a completer with Ace).
+// NOTE: We import these for their side-effects.
+import "./i18n"
 import "./ide/completer"
 
 import React from "react"
