@@ -66,4 +66,18 @@ print(5 % 2)
         cy.get("div.droplet-palette-element").should("not.be.visible")
         cy.get("button").contains("RUN").click()
     })
+
+    it("creates and runs a js script with fitMedia()", () => {
+        cy.get('[data-test="newScript"]').click()
+        cy.get("select[title='Switch script language']").select("JavaScript")
+        cy.get("#scriptName").type("js_test")
+        cy.get("input").contains("CREATE").click()
+
+        // Enter new text with fitMedia()
+        cy.get(".ace_content").type(`{selectAll}{del}{enter}
+fitMedia(OS_CLAP01, 1, 1, 2);
+`)
+        cy.get("button").contains("RUN").click()
+        cy.get('[data-test="notificationBar"]').contains("Script ran successfully")
+    })
 })
