@@ -8,7 +8,6 @@ const HtmlWebpackPlugin = require("html-webpack-plugin")
 const BundleAnalyzerPlugin = require("webpack-bundle-analyzer").BundleAnalyzerPlugin
 
 const libDir = "lib"
-const appDir = "src/app"
 const dataDir = "src/data"
 const distDir = path.resolve(__dirname, "dist")
 
@@ -16,6 +15,17 @@ module.exports = {
     entry: {
         main: "./src/index.tsx",
         img: "./public/img/video-thumbnail.png",
+        // Used for dynamic theme switching:
+        light: "./css/earsketch/theme_light.css",
+        dark: "./css/earsketch/theme_dark.css",
+        // Only used by autograders:
+        bootstrap: "./css/vendor/bootstrap.css",
+        glyphicons: "./css/vendor/bootstrap-glyphicons.css",
+    },
+    output: {
+        path: path.resolve(__dirname, "dist/"),
+        filename: "bundle.[contenthash].js",
+        publicPath: "",
     },
     resolve: {
         extensions: ["*", ".js", ".jsx", ".ts", ".tsx", ".mjs", ".wasm", ".json", ".css"],
@@ -28,12 +38,7 @@ module.exports = {
             recorder: path.resolve(__dirname, `${libDir}/recorderjs/recorder.js`),
             dsp: path.resolve(__dirname, `${libDir}/dsp.js`),
             d3: path.resolve(__dirname, `${libDir}/d3.min.js`),
-
-            // Emscripten
             pitchshiftWorklet: path.resolve(__dirname, `${libDir}/pitchshift/worklet.js`),
-
-            // Controllers
-            chatWindowDirective: path.resolve(__dirname, `${appDir}/chatWindowDirective.js`),
         },
     },
     module: {
@@ -63,10 +68,19 @@ module.exports = {
         }, {
             test: /\.css$/,
             use: ["style-loader", "css-loader", "postcss-loader"],
+            exclude: /css\/(vendor\/|earsketch\/theme).*css/,
+        }, {
+            test: /css\/(vendor\/|earsketch\/theme).*css/,
+            type: "asset/resource",
+            generator: { filename: "[file]" },
         }, {
             test: path.resolve(__dirname, "public/img/video-thumbnail.png"),
             type: "asset/resource",
             generator: { filename: "img/video-thumbnail.png" },
+        }, {
+            test: /public\/newrelic\/newrelicbrowser.*.js/,
+            type: "asset/resource",
+            generator: { filename: "newrelic/newrelicbrowser.js" },
         }, {
             test: /\.(png|svg|jpg|jpeg|gif)$/,
             exclude: /node_modules/,
@@ -100,32 +114,23 @@ module.exports = {
         new HtmlWebpackPlugin({
             filename: path.resolve(distDir, "index.html"),
             template: "public/index.html",
+            favicon: "public/favicon.ico",
         }),
         new HtmlWebpackPlugin({
             filename: path.resolve(distDir, "sorry.html"),
             template: "public/sorry.html",
+            inject: false,
         }),
         new HtmlWebpackPlugin({
             filename: path.resolve(distDir, "message-login.html"),
             template: "public/message-login.html",
             inject: false,
         }),
-        new HtmlWebpackPlugin({
-            filename: path.resolve(distDir, "autograder/index.html"),
+        ...["autograder", "codeAnalyzer", "codeAnalyzerCAI", "codeAnalyzerContest"].map(name => new HtmlWebpackPlugin({
+            filename: path.resolve(distDir, `${name}/index.html`),
             template: "public/index_autograders.html",
-        }),
-        new HtmlWebpackPlugin({
-            filename: path.resolve(distDir, "codeAnalyzer/index.html"),
-            template: "public/index_autograders.html",
-        }),
-        new HtmlWebpackPlugin({
-            filename: path.resolve(distDir, "codeAnalyzerCAI/index.html"),
-            template: "public/index_autograders.html",
-        }),
-        new HtmlWebpackPlugin({
-            filename: path.resolve(distDir, "codeAnalyzerContest/index.html"),
-            template: "public/index_autograders.html",
-        }),
+            favicon: "public/favicon.ico",
+        })),
         new BundleAnalyzerPlugin({
             analyzerMode: "static",
             openAnalyzer: false,
