@@ -5,6 +5,7 @@ const path = require("path")
 const webpack = require("webpack")
 const HappyPack = require("happypack")
 const HtmlWebpackPlugin = require("html-webpack-plugin")
+const BundleAnalyzerPlugin = require("webpack-bundle-analyzer").BundleAnalyzerPlugin
 
 const libDir = "lib"
 const appDir = "src/app"
@@ -124,6 +125,10 @@ module.exports = {
         new HtmlWebpackPlugin({
             filename: path.resolve(distDir, "codeAnalyzerContest/index.html"),
             template: "public/index_autograders.html",
+        }),
+        new BundleAnalyzerPlugin({
+            analyzerMode: "static",
+            openAnalyzer: false,
         }),
     ],
     optimization: {
