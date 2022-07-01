@@ -18,11 +18,11 @@ import * as console from "../ide/console"
 import {
     CAIButton, CAIMessage, selectWizard, selectResponseOptions, combineMessageText, selectMessageList,
     selectInputOptions, addToMessageList, clearMessageList, setDefaultInputOptions, setDropupLabel, setErrorOptions,
-    setInputOptions, setMessageList, setResponseOptions, setCurriculumView,
+    setInputOptions, setMessageList, setResponseOptions, setCurriculumView, setActiveProject,
 } from "./caiState"
 
 // Listen for editor updates.
-if (FLAGS.SHOW_CAI) {
+if (FLAGS.SHOW_CAI || FLAGS.SHOW_CHAT) {
     let caiTimer = 0
     let firstEdit: number | null = null
 
@@ -194,23 +194,27 @@ export const caiSwapTab = createAsyncThunk<void, string, ThunkAPI>(
     "cai/caiSwapTab",
     (activeProject, { getState, dispatch }) => {
         if (activeProject === "" || activeProject === null || activeProject === undefined) {
-            studentPreferences.setActiveProject("")
+            dispatch(setActiveProject(""))
             dispatch(clearMessageList())
             dispatch(setInputOptions([]))
             dispatch(setDropupLabel(""))
             dispatch(setErrorOptions([]))
 
             dialogue.clearNodeHistory()
+            studentPreferences.setActiveProject("")
         } else {
-            studentPreferences.setActiveProject(activeProject)
-            dialogue.setActiveProject(activeProject)
+            dispatch(setActiveProject(activeProject))
 
             if (!selectMessageList(getState())[activeProject]) {
                 dispatch(setMessageList([]))
-                if (!selectWizard(getState())) {
+                if (FLAGS.SHOW_CAI && !selectWizard(getState())) {
                     dispatch(introduceCAI())
                 }
             }
+
+            dialogue.setActiveProject(activeProject)
+            studentPreferences.setActiveProject(activeProject)
+
             dispatch(setInputOptions(dialogue.createButtons()))
             if (selectInputOptions(getState()).length === 0 && !dialogue.isDone()) {
                 dispatch(setDefaultInputOptions())
@@ -275,7 +279,7 @@ export const compileError = createAsyncThunk<void, string | Error, ThunkAPI>(
     (data, { getState, dispatch }) => {
         const errorReturn = dialogue.handleError(data)
 
-        if (FLAGS.SHOW_CHAT && !selectWizard(getState())) {
+        if (FLAGS.SHOW_CAI && FLAGS.SHOW_CHAT && !selectWizard(getState())) {
             const message = {
                 text: [["plaintext", ["Compiled the script with error: " + console.elaborate(data)]]],
                 date: Date.now(),
@@ -308,7 +312,7 @@ export const openCurriculum = createAsyncThunk<void, string, ThunkAPI>(
 export const closeCurriculum = createAsyncThunk<void, void, ThunkAPI>(
     "cai/closeCurriculum",
     (_, { getState }) => {
-        if (FLAGS.SHOW_CHAT && !selectWizard(store.getState())) {
+        if (FLAGS.SHOW_CAI && FLAGS.SHOW_CHAT && !selectWizard(store.getState())) {
             collaboration.sendChatMessage({
                 text: [["plaintext", ["the CAI Window"]]],
                 sender: user.selectUserName(getState()),
@@ -337,7 +341,7 @@ export const curriculumPage = createAsyncThunk<void, [number[], string?], ThunkA
         dialogue.addCurriculumPageToHistory(location)
         const east = store.getState().layout.east
         if (!(east.open && east.kind === "CAI")) {
-            if (FLAGS.SHOW_CHAT && !selectWizard(store.getState())) {
+            if (FLAGS.SHOW_CAI && FLAGS.SHOW_CHAT && !selectWizard(store.getState())) {
                 const page = title || location as unknown as string
                 collaboration.sendChatMessage({
                     text: [["plaintext", ["Curriculum Page " + page]]],
