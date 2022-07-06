@@ -43,8 +43,6 @@ const ChatFooter = () => {
 
     const [inputText, setInputText] = useState("")
 
-    const caiTree = CAI_TREE_NODES.slice(0)
-
     const parseStudentInput = (label: string) => {
         dialogue.addToNodeHistory(["chat", [label, userName]])
 
@@ -104,8 +102,8 @@ const ChatFooter = () => {
 
     const findUtteranceBySlashCommand = (slashCommandPrompt: string) => {
         const utterances: AutocompleteSuggestion[] = []
-        for (const node of caiTree) {
-            if ("slashCommand" in node && node.slashCommand.toLowerCase().startsWith(slashCommandPrompt.toLowerCase())) {
+        for (const node of Object.values(CAI_TREE_NODES)) {
+            if (node.slashCommand && node.slashCommand.toLowerCase().startsWith(slashCommandPrompt.toLowerCase())) {
                 utterances.push({
                     utterance: node.utterance,
                     slashCommand: node.slashCommand,
@@ -170,7 +168,7 @@ const ChatFooter = () => {
                         }}
                     />
                     : <input type="text" value={inputText} onChange={e => setInputText(e.target.value)} onKeyDown={e => handleKeyDown(e)} style={{ backgroundColor: "lightgray" }}></input>}
-                <button className="btn btn-cai py-1.5 px-3" onClick={() => { sendMessage() }} style={{ float: "right" }}> Send </button>
+                <button className="btn btn-cai py-1.5 px-3" onClick={() => { sendMessage() }} style={{ float: "right", backgroundColor: "#d3d25a" }}> Send </button>
             </div>
         </div>
     )

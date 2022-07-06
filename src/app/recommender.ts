@@ -53,7 +53,7 @@ const keyLabelToNumber = (label: string) => {
 // Load lists of numbers and keys
 let AUDIOKEYS = Object.values(NUMBERS_AUDIOKEYS)
 
-let soundGenreDict: { [key: string]: string } = {}
+export let soundGenreDict: { [key: string]: string } = {}
 let soundInstrumentDict: { [key: string]: string } = {}
 
 interface KeyInformation {
@@ -72,16 +72,6 @@ export function setKeyDict(genre: { [key: string]: string }, instrument: { [key:
     AUDIOKEYS = Object.values(NUMBERS_AUDIOKEYS).filter((key) => {
         return Object.keys(soundGenreDict).includes(key)
     })
-}
-
-export function getKeyDict(type: string) {
-    if (type === "genre") {
-        return soundGenreDict
-    } else if (type === "instrument") {
-        return soundInstrumentDict
-    } else {
-        return {}
-    }
 }
 
 export function addRecInput(recInput: string[], script: Script) {
@@ -164,7 +154,8 @@ export async function recommendReverse(recommendedSounds: string[], inputSamples
 
     while (filteredRecs.length < bestLimit) {
         const recs: { [key: string]: number } = {}
-        const outputs = findGenreInstrumentCombinations(genreLimit, instrumentLimit)
+        const outputs = findGenreInstrumentCombinations(genreLimit, instrumentLimit).sort(() => 0.5 - Math.random()).slice(0, 200)
+
         filteredRecs = []
         for (const output of outputs) {
             const outputRecs = await generateRecommendations([output], coUsage, similarity, useKeyOverride)
@@ -239,7 +230,7 @@ function filterRecommendations(inputRecs: { [key: string]: number }, recommended
     }
     if (inputSamples.length > 0) {
         let i: number = 0
-        while (i < bestLimit) {
+        while (i < bestLimit && Object.keys(recs).length > 0) {
             const maxScore = Object.values(recs).reduce((a, b) => a > b ? a : b)
             const maxRecs = []
             for (const key in recs) {

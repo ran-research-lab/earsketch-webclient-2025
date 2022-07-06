@@ -4,8 +4,8 @@ import { Collapsed } from "../browser/Utils"
 
 import * as cai from "./caiState"
 import * as caiThunks from "./caiThunks"
-import * as caiDialogue from "./dialogue"
-import * as caiStudentPreferences from "./studentPreferences"
+import * as dialogue from "./dialogue"
+import * as student from "./student"
 import * as tabs from "../ide/tabState"
 import * as appState from "../app/appState"
 import * as ESUtils from "../esutils"
@@ -52,7 +52,7 @@ export const SoundPreviewContent = (name: string) => {
                 <div className="pl-2 pr-4 h-1">
                     <button
                         className="btn btn-xs btn-action"
-                        onClick={e => { e.preventDefault(); dispatch(previewSound(name)); caiStudentPreferences.addUIClick("sound - preview") }}
+                        onClick={e => { e.preventDefault(); dispatch(previewSound(name)); student.addUIClick("sound - preview") }}
                         title={t("soundBrowser.clip.tooltip.previewSound")}
                     >
                         {previewFileName === name
@@ -63,7 +63,7 @@ export const SoundPreviewContent = (name: string) => {
                         (
                             <button
                                 className="btn btn-xs btn-action"
-                                onClick={() => { editor.pasteCode(name); caiStudentPreferences.addUIClick("sound - copy") }}
+                                onClick={() => { editor.pasteCode(name); student.addUIClick("sound - copy") }}
                                 title={t("soundBrowser.clip.tooltip.paste")}
                             >
                                 <i className="icon icon-paste2" />
@@ -80,18 +80,20 @@ const CAIMessageView = (message: cai.CAIMessage) => {
     const dispatch = useDispatch()
     const userName = useSelector(user.selectUserName)
 
-    const wholeMessage = message.text.map((phrase, index) => {
-        switch (phrase[0]) {
-            case "plaintext":
-                return phrase[1][0]
-            case "LINK":
-                return <a key={index} href="#" onClick={e => { e.preventDefault(); dispatch(caiThunks.openCurriculum(phrase[1][1])); caiDialogue.addToNodeHistory(["curriculum", phrase[1][1]]) }} style={{ color: "blue" }}>{phrase[1][0]}</a>
-            case "sound_rec":
-                return SoundPreviewContent(phrase[1][0])
-            default:
-                return "error"
-        }
-    })
+    const wholeMessage = (message: cai.CAIMessage) => {
+        return message.text.map((phrase: [string, string], index) => {
+            switch (phrase[0]) {
+                case "plaintext":
+                    return <span key={index}> {phrase[1][0]} </span>
+                case "LINK":
+                    return <a key={index} href="#" onClick={e => { e.preventDefault(); dispatch(caiThunks.openCurriculum(phrase[1][1])); dialogue.addToNodeHistory(["curriculum", phrase[1][1]]) }} style={{ color: "blue" }}>{phrase[1][0]}</a>
+                case "sound_rec":
+                    return <span key={index}> {SoundPreviewContent(phrase[1][0])} </span>
+                default:
+                    return <span key={index}> error </span>
+            }
+        })
+    }
 
     return (
         <div className="chat-message" style={{ color: "black" }}>
@@ -102,7 +104,7 @@ const CAIMessageView = (message: cai.CAIMessage) => {
             }}>
                 <div className="chat-message-sender">{message.sender}</div>
                 <div id="text" className="chat-message-text">
-                    {wholeMessage}
+                    {wholeMessage(message)}
                 </div>
             </div>
             <div className="chat-message-date" style={{ float: message.sender === userName ? "left" : "right" }}>
@@ -124,7 +126,7 @@ export const CaiBody = () => {
             <div className="chat-message-container text-sm">
                 <ul>
                     {messageList[activeProject] &&
-                    Object.entries(messageList[activeProject]).map(([idx, message]: [string, cai.CAIMessage]) =>
+                    Object.values(messageList[activeProject]).map((message: cai.CAIMessage, idx) =>
                         <li key={idx}>
                             <CAIMessageView {...message} />
                         </li>)}
@@ -134,30 +136,36 @@ export const CaiBody = () => {
     )
 }
 
+const CaiInputButtons = (inputOptions: cai.CAIButton[]) => {
+    const dispatch = useDispatch()
+
+    return <ul>
+        {Object.entries(inputOptions).map(([inputIdx, input]: [string, cai.CAIButton]) =>
+            <li key={inputIdx}>
+                <button type="button" className="btn btn-cai" onClick={() => dispatch(caiThunks.sendCAIMessage(input))}
+                    style={{ margin: "10px", maxWidth: "90%", whiteSpace: "initial", textAlign: "left" }}>
+                    {input.label}
+                </button>
+            </li>)}
+    </ul>
+}
+
 const CaiFooter = () => {
     const dispatch = useDispatch()
     const inputOptions = useSelector(cai.selectInputOptions)
     const errorOptions = useSelector(cai.selectErrorOptions)
     const dropupLabel = useSelector(cai.selectDropupLabel)
-    const buttonLimit = 6
 
     return (
         <div id="chat-footer" style={{ marginTop: "auto", display: "block" }}>
             <div style={{ flex: "auto" }}>
-                {inputOptions.length < buttonLimit
-                    ? <ul>
-                        {Object.entries(inputOptions).map(([inputIdx, input]: [string, cai.CAIButton]) =>
-                            <li key={inputIdx}>
-                                <button type="button" className="btn btn-cai py-1.5 px-3" onClick={() => dispatch(caiThunks.sendCAIMessage(input))} style={{ margin: "10px", maxWidth: "90%", whiteSpace: "initial", textAlign: "left" }}>
-                                    {input.label}
-                                </button>
-                            </li>)}
-                    </ul>
+                {!dropupLabel.length
+                    ? <CaiInputButtons {...inputOptions}/>
                     : <div className="dropup-cai" style={{ width: "100%" }}>
                         <button className="dropbtn-cai" style={{ marginLeft: "auto", display: "block", marginRight: "auto" }}>
                             {dropupLabel}
                         </button>
-                        <div className="dropup-cai-content" style={{ left: "50%", height: "fit-content" }}>
+                        <div className="dropup-cai-content" style={{ left: "50%", maxHeight: "fit-content" }}>
                             <ul>
                                 {Object.entries(inputOptions).map(([inputIdx, input]: [string, cai.CAIButton]) =>
                                     <li key={inputIdx}>
@@ -168,15 +176,8 @@ const CaiFooter = () => {
                     </div>}
             </div>
             <div style={{ flex: "auto" }}>
-                <ul>
-                    {errorOptions.length > 0 &&
-                    Object.entries(errorOptions).map(([errIdx, input]: [string, cai.CAIButton]) =>
-                        <li key={errIdx}>
-                            <button type="button" className="btn btn-cai py-1.5 px-3" onClick={() => dispatch(caiThunks.sendCAIMessage(input))} style={{ margin: "10px", maxWidth: "90%", whiteSpace: "initial", textAlign: "left" }}>
-                                {input.label}
-                            </button>
-                        </li>)}
-                </ul>
+                {errorOptions.length > 0 &&
+                <CaiInputButtons {...errorOptions}/>}
             </div>
         </div>
     )
@@ -186,7 +187,7 @@ export const CAI = () => {
     const dispatch = useDispatch()
     const theme = useSelector(appState.selectColorTheme)
     const paneIsOpen = useSelector(layout.isEastOpen)
-    const activeScript = useSelector(tabs.selectActiveTabScript).name
+    const activeScript = useSelector(tabs.selectActiveTabScript)?.name
     const curriculumLocation = useSelector(curriculum.selectCurrentLocation)
     const curriculumPage = useSelector(curriculum.selectPageTitle)
     const showCAI = useSelector(layout.selectEastKind) === "CAI"
@@ -218,16 +219,16 @@ export const CAI = () => {
 
 if (FLAGS.SHOW_CAI || FLAGS.SHOW_CHAT) {
     // TODO: Moved out of userProject, should probably go in a useEffect.
-    window.onfocus = () => caiStudentPreferences.addOnPageStatus(1)
-    window.onblur = () => caiStudentPreferences.addOnPageStatus(0)
+    window.onfocus = () => student.addOnPageStatus(1)
+    window.onblur = () => student.addOnPageStatus(0)
 
     window.addEventListener("load", () => {
-        caiStudentPreferences.addPageLoad(1)
+        student.addPageLoad(1)
     })
 
     window.addEventListener("beforeunload", () => {
         // the absence of a returnValue property on the event will guarantee the browser unload happens
-        caiStudentPreferences.addPageLoad(0)
+        student.addPageLoad(0)
     })
 
     let mouseX: number | undefined, mouseY: number | undefined
@@ -238,28 +239,28 @@ if (FLAGS.SHOW_CAI || FLAGS.SHOW_CHAT) {
     })
 
     document.addEventListener("copy" || "cut", e => {
-        caiDialogue.addToNodeHistory([e.type, e.clipboardData!.getData("Text")])
+        dialogue.addToNodeHistory([e.type, e.clipboardData!.getData("Text")])
     })
 
     window.addEventListener("paste", e => {
-        caiDialogue.addToNodeHistory([e.type, []])
+        dialogue.addToNodeHistory([e.type, []])
     })
 
     window.setInterval(() => {
         if (mouseX && mouseY) {
-            caiStudentPreferences.addMousePos({ x: mouseX, y: mouseY })
+            student.studentModel.preferences.mousePos.push({ x: mouseX, y: mouseY })
         }
     }, 5000)
 
     window.addEventListener("copy", () => {
-        caiDialogue.addToNodeHistory(["copy", []])
+        dialogue.addToNodeHistory(["copy", []])
     })
 
     window.addEventListener("cut", () => {
-        caiDialogue.addToNodeHistory(["cut", []])
+        dialogue.addToNodeHistory(["cut", []])
     })
 
     window.addEventListener("paste", () => {
-        caiDialogue.addToNodeHistory(["paste", []])
+        dialogue.addToNodeHistory(["paste", []])
     })
 }
