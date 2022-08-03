@@ -213,6 +213,7 @@ function createJsInterpreter(code: string) {
         throw e
     }
 
+    interpreter.globalScope.strict = true // always enable strict mode
     return interpreter
 }
 
