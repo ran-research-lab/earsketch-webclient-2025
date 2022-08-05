@@ -5,7 +5,9 @@ import { ModalContainer } from "./App"
 
 import * as reader from "./reader"
 
-import { MeasureView, fillDict } from "../cai/analysis"
+import { getStandardSounds } from "./audiolibrary"
+import { MeasureView } from "../cai/analysis"
+import { fillDict } from "./recommender"
 import { Reports, Result, Results, DownloadOptions } from "./CodeAnalyzer"
 import { Options, Upload, ReportOptions, Entries } from "./CodeAnalyzerCAI"
 
@@ -368,7 +370,12 @@ export const CodeAnalyzerContest = () => {
     document.getElementById("loading-screen")!.style.display = "none"
 
     useEffect(() => {
-        fillDict()
+        const fillSoundData = async () => {
+            const sounds = await getStandardSounds()
+            fillDict(sounds)
+        }
+
+        fillSoundData()
     }, [])
 
     const [processing, setProcessing] = useState(null as string | null)
