@@ -20,6 +20,9 @@
     "switchTheme": "Switch Theme",
     "reportError": "Report Error",
     "leave": "Leave",
+    "soundBrowser.expandSoundFolder": "Expand sound folder {{folder}}",
+    "soundBrowser.expandFilters": "Expand sound browser filter button panel",
+    "soundBrowser.collapseFilters": "Collapse sound browser filter button panel",
     "soundBrowser.filterDropdown.artists": "Artists",
     "soundBrowser.filterDropdown.genres": "Genres",
     "soundBrowser.filterDropdown.instruments": "Instruments",
@@ -344,7 +347,7 @@
       "skip": "Skip",
       "skipTour": "Skip tour",
       "start": "Start",
-      "close": "Close",
+      "close": "Close tour",
       "next": "Next"
     },
     "header": {

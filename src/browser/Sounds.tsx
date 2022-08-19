@@ -16,6 +16,7 @@ import * as user from "../user/userState"
 import * as tabs from "../ide/tabState"
 import type { RootState } from "../reducers"
 import type { SoundEntity } from "common"
+import { BrowserTabType } from "./BrowserTab"
 
 import { SearchBar } from "./Utils"
 import { Disclosure } from "@headlessui/react"
@@ -89,6 +90,7 @@ interface ButtonFilterProps {
 }
 
 const ButtonFilterList = ({ category, items, justification }: ButtonFilterProps) => {
+    const { t } = useTranslation()
     const classes = classNames({
         "flex flex-row flex-wrap": justification === "flex",
         "grid grid-cols-3 gap-2": justification === "grid",
@@ -109,7 +111,8 @@ const ButtonFilterList = ({ category, items, justification }: ButtonFilterProps)
                             </div>)}
                         </div>
                         <Disclosure.Button as="div" className={open ? "" : "absolute inset-x-0 bottom-0 bg-gradient-to-b from-transparent to-white dark:to-gray-900"}>
-                            <button className={`w-full ${open ? "icon-arrow-up" : "icon-arrow-down"}`}/>
+                            <button aria-label={open ? t("soundBrowser.collapseFilters") : t("soundBrowser.expandFilters")}
+                                className={`w-full ${open ? "icon-arrow-up" : "icon-arrow-down"}`}/>
                         </Disclosure.Button>
                     </div>
                 )}
@@ -130,7 +133,7 @@ const Filters = () => {
     const numInstrumentsSelected = useSelector(sounds.selectNumInstrumentsSelected)
     const numKeysSelected = useSelector(sounds.selectNumKeysSelected)
     const tabClass = classNames({
-        "text-xs uppercase border-b-2 text-gray-400 rounded p-1 min-w-1/5 max-w-1/4": true,
+        "text-xs uppercase border-b-2 text-gray-600 dark:text-gray-300 rounded p-1 min-w-1/5 max-w-1/4": true,
         "border-gray-400": numArtistsSelected > 0 || numGenresSelected > 0 || numInstrumentsSelected > 0 || numKeysSelected > 0,
     })
     const spanClass = "absolute -top-[0.6rem] right-[-15px] inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-blue shadow rounded-full"
@@ -482,7 +485,7 @@ export const SoundBrowser = () => {
                 </div>
             </div>
 
-            <div className="grow flex flex-col justify-start" role="tabpanel">
+            <div className="grow flex flex-col justify-start" role="tabpanel" id={"panel-" + BrowserTabType.Sound}>
                 <DefaultSoundCollection />
             </div>
         </>
