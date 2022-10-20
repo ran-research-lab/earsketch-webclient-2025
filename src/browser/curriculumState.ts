@@ -1,4 +1,4 @@
-import hljs from "highlight.js/lib/core"
+import ReactDOM from "react-dom"
 import { createSlice, createAsyncThunk, createSelector } from "@reduxjs/toolkit"
 import lunr from "lunr"
 
@@ -6,6 +6,7 @@ import esconsole from "../esconsole"
 import * as layout from "../ide/layoutState"
 import type { RootState, ThunkAPI, AppDispatch } from "../reducers"
 import { BrowserTabType } from "./BrowserTab"
+import { highlight } from "../ide/highlight"
 
 const CURRICULUM_DIR = "../curriculum"
 
@@ -124,15 +125,23 @@ const processContent = (location: number[], html: string, dispatch: AppDispatch)
         root.appendChild(document.adoptNode(doc.body.firstChild))
     }
 
-    // Highlight code blocks.
-    root.querySelectorAll("pre code").forEach(block => {
-        hljs.highlightElement(block as HTMLElement)
-        block.classList.add("whitespace-pre-wrap")
-    })
-
     // Connect copy buttons.
     root.querySelectorAll(".copy-btn-python,.copy-btn-javascript").forEach((button: HTMLButtonElement) => {
-        button.onclick = () => callbacks.import(button.nextSibling!.textContent!)
+        // NOTE: We do this before highlighting to ensure that `textContent` is not altered by the highlighter.
+        const source = button.nextSibling!.textContent!
+        button.onclick = () => callbacks.import(source)
+    })
+
+    // Highlight code blocks.
+    root.querySelectorAll("pre code").forEach(block => {
+        const language = block.classList.contains("python") ? "python" : "javascript"
+        const darkBlock = block.cloneNode(true) as Element
+        const { light, dark } = highlight(block.textContent!, language)
+        ReactDOM.render(light, block)
+        block.classList.add("whitespace-pre-wrap", "block", "overflow-x-auto", "dark:hidden")
+        ReactDOM.render(dark, darkBlock)
+        darkBlock.classList.add("whitespace-pre-wrap", "hidden", "overflow-x-auto", "dark:block")
+        block.parentElement!.append(darkBlock)
     })
 
     // Fix internal cross-references.
