@@ -22,7 +22,7 @@ import * as caiDialogue from "../cai/dialogue"
 import * as collaboration from "../app/collaboration"
 import * as collabState from "../app/collaborationState"
 import * as ESUtils from "../esutils"
-import { selectBlocksMode, setBlocksMode } from "./ideState"
+import { selectAutocomplete, selectBlocksMode, setBlocksMode } from "./ideState"
 import * as tabs from "./tabState"
 import store from "../reducers"
 import * as scripts from "../browser/scriptsState"
@@ -150,8 +150,9 @@ const dontComplete = {
     javascriptCompletions = completeFromList(javascriptFunctions.concat(autocompletions))
 })()
 
-const javascriptAutocomplete: CompletionSource = (context) => javascriptCompletions(context)
-const pythonAutocomplete: CompletionSource = (context) => pythonCompletions(context)
+let autocompleteEnabled = true
+const javascriptAutocomplete: CompletionSource = (context) => autocompleteEnabled ? javascriptCompletions(context) : null
+const pythonAutocomplete: CompletionSource = (context) => autocompleteEnabled ? pythonCompletions(context) : null
 
 // Internal state
 let view: EditorView = null as unknown as EditorView
@@ -414,6 +415,7 @@ export const Editor = ({ importScript }: { importScript: (s: Script) => void }) 
     const blocksElement = useRef<HTMLDivElement>(null)
     const collaborators = useSelector(collabState.selectCollaborators)
     const blocksMode = useSelector(selectBlocksMode)
+    const autocomplete = useSelector(selectAutocomplete)
     const [inBlocksMode, setInBlocksMode] = useState(false)
     const [shaking, setShaking] = useState(false)
 
@@ -476,6 +478,8 @@ export const Editor = ({ importScript }: { importScript: (s: Script) => void }) 
             droplet.on("change", () => {})
         }
     }, [blocksMode])
+
+    useEffect(() => { autocompleteEnabled = autocomplete }, [autocomplete])
 
     useEffect(() => {
         // User switched tabs. If we're in blocks mode, try to stay there with the new script.
