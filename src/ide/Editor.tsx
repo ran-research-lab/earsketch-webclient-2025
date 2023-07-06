@@ -365,6 +365,7 @@ function onEdit(update: ViewUpdate) {
     }
 
     const operations: collaboration.EditOperation[] = []
+    const caiOperations: { action: "remove" | "insert", text: string } [] = []
     update.changes.iterChanges((fromA, toA, fromB, toB, inserted) => {
         // Adapt CodeMirror's change structure into ours (which is similar to Ace's).
         // TODO: In the future, it might be nice to adopt CodeMirror's format, which has fewer cases to deal with.
@@ -376,6 +377,13 @@ function onEdit(update: ViewUpdate) {
                 end: toA,
                 len: toA - fromA,
             })
+
+            if (FLAGS.UPLOAD_CAI_HISTORY && script) {
+                caiOperations.push({
+                    action: "remove",
+                    text: script.source_code.slice(fromA, toA),
+                })
+            }
         }
         if (fromB < toB) {
             operations.push({
@@ -385,6 +393,13 @@ function onEdit(update: ViewUpdate) {
                 len: inserted.length,
                 text: inserted.toString(),
             })
+
+            if (FLAGS.UPLOAD_CAI_HISTORY) {
+                caiOperations.push({
+                    action: "remove",
+                    text: inserted.toString(),
+                })
+            }
         }
     })
 
@@ -393,14 +408,11 @@ function onEdit(update: ViewUpdate) {
     if (collaboration.active && !collaboration.lockEditor) {
         const operation = operations.length === 1 ? operations[0] : { action: "mult", operations } as const
         collaboration.editScript(operation)
+    }
 
-        if (FLAGS.SHOW_CHAT) {
-            for (const operation of operations) {
-                caiDialogue.addToNodeHistory([
-                    "editor " + operation.action,
-                    operation.action === "insert" ? operation.text : undefined,
-                ])
-            }
+    if (FLAGS.UPLOAD_CAI_HISTORY && (!collaboration.active || !collaboration.lockEditor)) {
+        for (const operation of caiOperations) {
+            caiDialogue.addToNodeHistory(["editor " + operation.action, operation.text])
         }
     }
 }

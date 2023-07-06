@@ -38,19 +38,12 @@ export interface SoundProfile {
 }
 
 export interface Report {
-    OVERVIEW: { [key: string]: string | number }
+    OVERVIEW: { measures: number, "length (seconds)": number, [key: string]: string | number }
     MEASUREVIEW: MeasureView
     SOUNDPROFILE: SoundProfile
     APICALLS: CallObj []
     COMPLEXITY?: Results
     VARIABLES?: VariableObj []
-}
-
-export let savedReport: Report = {
-    OVERVIEW: {},
-    MEASUREVIEW: {},
-    SOUNDPROFILE: {},
-    APICALLS: [],
 }
 
 // Report the code complexity analysis of a script.
@@ -64,16 +57,17 @@ export function analyzeCode(language: string, sourceCode: string) {
 
 // Report the music analysis of a script.
 export function analyzeMusic(trackListing: DAWData, apiCalls?: CallObj [], variables?: VariableObj []) {
-    return timelineToEval(trackToTimeline(trackListing, apiCalls, variables))
+    const musicAnalysis = timelineToEval(trackToTimeline(trackListing, apiCalls, variables))
+    if (FLAGS.SHOW_CAI) {
+        studentModel.musicAttributes.soundProfile = musicAnalysis.SOUNDPROFILE
+    }
+    return musicAnalysis
 }
 
 // Report the code complexity and music analysis of a script.
 export function analyzeCodeAndMusic(language: string, sourceCode: string, trackListing: DAWData) {
     const codeComplexity = analyzeCode(language, sourceCode)
     const musicAnalysis = analyzeMusic(trackListing, getApiCalls())
-    if (FLAGS.SHOW_CAI) {
-        studentModel.musicAttributes.soundProfile = musicAnalysis.SOUNDPROFILE
-    }
     return Object.assign({}, { Code: codeComplexity }, { Music: musicAnalysis })
 }
 
@@ -291,8 +285,6 @@ function timelineToEval(output: Report) {
     report.VARIABLES = output.VARIABLES
     report.MEASUREVIEW = output.MEASUREVIEW
     report.SOUNDPROFILE = output.SOUNDPROFILE
-
-    savedReport = Object.assign({}, report)
 
     return report
 }
