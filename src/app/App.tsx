@@ -459,7 +459,6 @@ const KeyboardShortcuts = () => {
         undo: [modifier, "Z"],
         redo: [modifier, "Shift", "Z"],
         comment: [modifier, "/"],
-        autocomplete: [isMac ? "Option" : "Ctrl", "Space"],
         zoomHorizontal: <>
             <kbd>{modifier}</kbd>+<kbd>{localize("Wheel")}</kbd> or <kbd>+</kbd>/<kbd>-</kbd>
         </>,
