@@ -49,6 +49,7 @@ Cypress.Commands.add("skipTour", () => {
     cy.get("body").find("button").contains("Skip").click()
     // wait for the quick tour modal to disappear
     cy.contains("h2", "Quick tour page 0 out of 10", { timeout: 10000 }).should("not.exist")
+    cy.get("div[id^='headlessui-dialog-']", { timeout: 10000 }).should("not.exist")
 })
 
 /**
@@ -65,7 +66,7 @@ Cypress.Commands.add("createScript", (scriptName) => {
     cy.get("input").contains("CREATE").click()
     // wait for modal to disappear
     cy.get("#scriptName", { timeout: 10000 }).should("not.exist")
-    cy.get("div[name^='headlessui-dialog-']", { timeout: 10000 }).should("not.exist")
+    cy.get("div[id^='headlessui-dialog-']", { timeout: 10000 }).should("not.exist")
 })
 
 /**
