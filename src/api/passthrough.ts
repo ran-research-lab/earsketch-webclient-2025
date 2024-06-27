@@ -46,9 +46,7 @@ export function init() {
         finish: false,
         length: 0,
         tracks: [{
-            effects: {
-                "TEMPO-TEMPO": [{ measure: 1, value: 120, shape: "square", sourceLine: 1 }],
-            },
+            effects: { TEMPO: { TEMPO: [{ measure: 1, value: 120, shape: "square", sourceLine: 1 }] } },
             clips: [],
         }],
         transformedClips: {}, // slicedClips, stretchedClips
@@ -560,7 +558,7 @@ export function analyzeTrack(result: DAWData, trackNumber: number, featureForAna
     // (Plus the mix track, with its tempo curve.)
     const analyzeResult = {
         tracks: [
-            { clips: [], effects: { "TEMPO-TEMPO": result.tracks[0].effects["TEMPO-TEMPO"] } },
+            { clips: [], effects: { TEMPO: result.tracks[0].effects.TEMPO } },
             result.tracks[trackNumber],
         ],
         length: 0,
@@ -618,7 +616,7 @@ export function analyzeTrackForTime(result: DAWData, trackNumber: number, featur
     // (Plus the mix track, with its tempo curve.)
     const analyzeResult = {
         tracks: [
-            { clips: [], effects: { "TEMPO-TEMPO": result.tracks[0].effects["TEMPO-TEMPO"] } },
+            { clips: [], effects: { TEMPO: result.tracks[0].effects.TEMPO } },
             result.tracks[trackNumber],
         ],
         length: 0,
@@ -1310,15 +1308,17 @@ export function addEffect(
         } as unknown as Track)
     }
 
-    const key = name + "-" + parameter
-
     // create the effect list if it does not exist
-    if (result.tracks[track].effects[key] === undefined) {
-        result.tracks[track].effects[key] = []
+    if (result.tracks[track].effects[name] === undefined) {
+        result.tracks[track].effects[name] = {}
+    }
+
+    if (result.tracks[track].effects[name][parameter] === undefined) {
+        result.tracks[track].effects[name][parameter] = []
     }
 
     const sourceLine = getLineNumber()
-    const automation = result.tracks[track].effects[key]
+    const automation = result.tracks[track].effects[name][parameter]
     if (endMeasure === 0) {
         automation.push({ measure: startMeasure, value: startValue, shape: "square", sourceLine })
     } else {
