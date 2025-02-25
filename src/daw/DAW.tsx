@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react"
 import { useSelector, useDispatch } from "react-redux"
 import { useTranslation } from "react-i18next"
+import { createPortal } from "react-dom"
 
 import * as appState from "../app/appState"
 import { EFFECT_MAP } from "../audio/effects"
@@ -767,6 +768,15 @@ export function setDAWData(result: types.DAWData) {
     dispatch(daw.setLoop(newLoop))
 }
 
+// Helper function to detect beat timing
+const isOnBeat = (position: number) => {
+    const fractional = position % 1
+    return fractional < 0.1 || 
+           (fractional > 0.24 && fractional < 0.26) || 
+           (fractional > 0.49 && fractional < 0.51) || 
+           (fractional > 0.74 && fractional < 0.76)
+}
+
 // Metronome light indicator component that pulses with the beat
 const MetronomeLight = () => {
     const [isActive, setIsActive] = useState(false)
@@ -783,12 +793,7 @@ const MetronomeLight = () => {
 
         const updateLight = () => {
             const position = player.getPosition()
-            // Get the fractional part of the position to determine beat position
-            const fractional = position % 1
-            // Light up on beat (when position is close to whole number or quarter beats)
-            const onBeat = fractional < 0.1 || (fractional > 0.24 && fractional < 0.26) || 
-                          (fractional > 0.49 && fractional < 0.51) || (fractional > 0.74 && fractional < 0.76)
-            setIsActive(onBeat)
+            setIsActive(isOnBeat(position))
         }
 
         // Calculate update interval based on tempo (faster for higher tempos)
@@ -803,11 +808,100 @@ const MetronomeLight = () => {
 
     return (
         <div 
-            className={`absolute -right-2 -top-2 w-3 h-3 rounded-full transition-opacity duration-75 ${
+            className={`absolute -right-2 -top-2 w-3 h-3 rounded-full transition-opacity duration-75 z-10 ${
                 isActive ? 'bg-green-500 opacity-100' : 'bg-green-900 opacity-30'
             }`}
             aria-hidden="true"
         />
+    )
+}
+
+// Dancing stick figure popup component
+const DancingStickFigure = () => {
+    const playing = useSelector(daw.selectPlaying)
+    const tempoMap = useSelector(daw.selectTempoMap)
+    const [isOnBeatNow, setIsOnBeatNow] = useState(false)
+    const [showPopup, setShowPopup] = useState(false)
+
+    // Show popup with delay when playing starts
+    useEffect(() => {
+        if (playing) {
+            const timer = setTimeout(() => setShowPopup(true), 500)
+            return () => clearTimeout(timer)
+        } else {
+            setShowPopup(false)
+        }
+    }, [playing])
+
+    // Update dancer position based on beat
+    useEffect(() => {
+        if (!playing || !showPopup) return
+
+        let intervalId: number | undefined
+
+        const updateDancer = () => {
+            const position = player.getPosition()
+            setIsOnBeatNow(isOnBeat(position))
+        }
+
+        // Update faster for higher tempos
+        const tempo = tempoMap.getTempoAtMeasure(player.getPosition())
+        const updateInterval = Math.min(60, 60000 / (tempo * 8)) // Update very frequently for smooth animation
+        
+        intervalId = window.setInterval(updateDancer, updateInterval)
+        return () => {
+            window.clearInterval(intervalId)
+        }
+    }, [playing, showPopup, tempoMap])
+
+    const handleClose = () => {
+        setShowPopup(false)
+    }
+
+    if (!showPopup) return null
+
+    // Portal to render at document body level
+    return createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 max-w-sm w-full pointer-events-auto">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-medium">Dancing to the Beat!</h3>
+                    <button 
+                        onClick={handleClose} 
+                        className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                        aria-label="Close"
+                    >
+                        ✕
+                    </button>
+                </div>
+                <div className="flex justify-center items-center h-40">
+                    {/* Stick figure that dances to the beat */}
+                    <div className="relative w-12 h-32">
+                        {/* Head */}
+                        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full border-2 border-black dark:border-white"></div>
+                        
+                        {/* Body */}
+                        <div className="absolute top-8 left-1/2 transform -translate-x-1/2 w-0.5 h-12 bg-black dark:bg-white"></div>
+                        
+                        {/* Arms - move on beat */}
+                        <div className={`absolute top-10 left-1/2 transform -translate-x-1/2 w-10 h-0.5 bg-black dark:bg-white transition-transform duration-100 ${
+                            isOnBeatNow ? 'rotate-[30deg]' : 'rotate-[15deg]'
+                        }`}></div>
+                        
+                        {/* Left leg - move on beat */}
+                        <div className={`absolute top-20 left-[calc(50%-5px)] transform -translate-x-1/2 origin-top w-0.5 h-10 bg-black dark:bg-white transition-transform duration-100 ${
+                            isOnBeatNow ? 'rotate-[-30deg]' : 'rotate-[0deg]'
+                        }`}></div>
+                        
+                        {/* Right leg - move opposite to beat */}
+                        <div className={`absolute top-20 left-[calc(50%+5px)] transform -translate-x-1/2 origin-top w-0.5 h-10 bg-black dark:bg-white transition-transform duration-100 ${
+                            isOnBeatNow ? 'rotate-[0deg]' : 'rotate-[-30deg]'
+                        }`}></div>
+                    </div>
+                </div>
+            </div>
+        </div>,
+        document.body
     )
 }
 
@@ -1114,6 +1208,7 @@ export const DAW = () => {
         {hideEditor &&
         <div style={{ display: "block" }} className="embedded-script-info"> Script {embeddedScriptName} by {embeddedScriptUsername}</div>}
         <Header playPosition={playPosition} setPlayPosition={setPlayPosition}></Header>
+        <DancingStickFigure />
 
         {!hideDAW &&
         <div id="zoom-container" className="grow relative w-full h-full flex flex-col overflow-x-auto overflow-y-hidden z-0">
