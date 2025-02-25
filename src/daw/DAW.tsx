@@ -17,6 +17,7 @@ import { addUIClick } from "../cai/dialogue/student"
 import { clearDAWHoverLine, setDAWHoverLine, setDAWPlayingLines } from "../ide/Editor"
 import { selectPlayArrows, selectScriptMatchesDAW } from "../ide/ideState"
 import classNames from "classnames"
+import * as player from "../audio/player"
 
 export const callbacks = {
     runScript: () => {},
@@ -212,10 +213,11 @@ const Header = ({ playPosition, setPlayPosition }: { playPosition: number, setPl
             </span>
 
             {/* Metronome */}
-            <span className="daw-transport-button">
+            <span className="daw-transport-button relative">
                 <button aria-label={t("daw.tooltip.toggleMetronome")} id="dawMetronomeButton" className={"dark:text-white hover:opacity-70" + (metronome ? " btn-clear-warning" : "")} data-toggle="tooltip" title={t("daw.tooltip.toggleMetronome")} data-placement="bottom" onClick={() => { toggleMetronome(); addUIClick("metronome " + (!metronome ? "on" : "off")) }}>
                     <span className="icon icon-meter3"></span>
                 </button>
+                {metronome && <MetronomeLight />}
             </span>
 
             {/* Volume Control */}
@@ -763,6 +765,50 @@ export function setDAWData(result: types.DAWData) {
         newLoop.end = playLength
     }
     dispatch(daw.setLoop(newLoop))
+}
+
+// Metronome light indicator component that pulses with the beat
+const MetronomeLight = () => {
+    const [isActive, setIsActive] = useState(false)
+    const playing = useSelector(daw.selectPlaying)
+    const tempoMap = useSelector(daw.selectTempoMap)
+
+    useEffect(() => {
+        if (!playing) {
+            setIsActive(false)
+            return
+        }
+
+        let intervalId: number | undefined
+
+        const updateLight = () => {
+            const position = player.getPosition()
+            // Get the fractional part of the position to determine beat position
+            const fractional = position % 1
+            // Light up on beat (when position is close to whole number or quarter beats)
+            const onBeat = fractional < 0.1 || (fractional > 0.24 && fractional < 0.26) || 
+                          (fractional > 0.49 && fractional < 0.51) || (fractional > 0.74 && fractional < 0.76)
+            setIsActive(onBeat)
+        }
+
+        // Calculate update interval based on tempo (faster for higher tempos)
+        const tempo = tempoMap.getTempoAtMeasure(player.getPosition())
+        const updateInterval = Math.min(100, 60000 / (tempo * 4)) // Update at least 10 times per second
+        
+        intervalId = window.setInterval(updateLight, updateInterval)
+        return () => {
+            window.clearInterval(intervalId)
+        }
+    }, [playing, tempoMap])
+
+    return (
+        <div 
+            className={`absolute -right-2 -top-2 w-3 h-3 rounded-full transition-opacity duration-75 ${
+                isActive ? 'bg-green-500 opacity-100' : 'bg-green-900 opacity-30'
+            }`}
+            aria-hidden="true"
+        />
+    )
 }
 
 export const DAW = () => {
