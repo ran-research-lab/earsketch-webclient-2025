@@ -820,7 +820,8 @@ const MetronomeLight = () => {
 const DancingStickFigure = () => {
     const playing = useSelector(daw.selectPlaying)
     const tempoMap = useSelector(daw.selectTempoMap)
-    const [isOnBeatNow, setIsOnBeatNow] = useState(false)
+    const [beatState, setBeatState] = useState(0) // 0-3 for different beat positions
+    const [beatStrength, setBeatStrength] = useState(0) // 0-1 for intensity
     const [showPopup, setShowPopup] = useState(false)
 
     // Show popup with delay when playing starts
@@ -837,20 +838,46 @@ const DancingStickFigure = () => {
     useEffect(() => {
         if (!playing || !showPopup) return
 
-        let intervalId: number | undefined
+        let animationFrameId: number
+        let lastPosition = 0
 
         const updateDancer = () => {
             const position = player.getPosition()
-            setIsOnBeatNow(isOnBeat(position))
+            const tempo = tempoMap.getTempoAtMeasure(position)
+            
+            // Get beat info in a more detailed way
+            const beatsPerMeasure = 4
+            const totalBeats = position * beatsPerMeasure
+            const currentBeat = totalBeats % beatsPerMeasure // 0-3.99
+            const beatNumber = Math.floor(currentBeat)
+            
+            // Calculate precise position within beat (0-1)
+            const beatFraction = currentBeat - beatNumber
+            
+            // Detect if we're on a new beat (for beat transitions)
+            const newBeat = Math.floor(totalBeats) !== Math.floor(lastPosition * beatsPerMeasure)
+            
+            // Beat strength calculation - stronger at the start of beat, fades out
+            const strengthCurve = Math.max(0, 1 - beatFraction * 2.5) // Fast decay
+            
+            if (newBeat) {
+                // When hitting a new beat, reset the strength to max
+                setBeatStrength(1)
+            } else {
+                // Gradually reduce strength based on position in beat
+                setBeatStrength(strengthCurve)
+            }
+            
+            // Set the beat number (0-3) for different dance moves on different beats
+            setBeatState(beatNumber)
+            
+            lastPosition = position
+            animationFrameId = requestAnimationFrame(updateDancer)
         }
-
-        // Update faster for higher tempos
-        const tempo = tempoMap.getTempoAtMeasure(player.getPosition())
-        const updateInterval = Math.min(60, 60000 / (tempo * 8)) // Update very frequently for smooth animation
         
-        intervalId = window.setInterval(updateDancer, updateInterval)
+        animationFrameId = requestAnimationFrame(updateDancer)
         return () => {
-            window.clearInterval(intervalId)
+            cancelAnimationFrame(animationFrameId)
         }
     }, [playing, showPopup, tempoMap])
 
@@ -860,10 +887,31 @@ const DancingStickFigure = () => {
 
     if (!showPopup) return null
 
+    // Calculate dance moves based on beat state and strength
+    const headBounce = `translateY(${beatStrength * 2}px)`
+    
+    // Different arm positions for different beats
+    let armsRotation = 'rotate-[0deg]'
+    if (beatState === 0) armsRotation = `rotate-[${25 + beatStrength * 15}deg]` // Up on beat 1
+    else if (beatState === 2) armsRotation = `rotate-[${-25 - beatStrength * 15}deg]` // Down on beat 3
+    else armsRotation = `rotate-[${beatStrength * 5}deg]` // Subtle on beats 2 and 4
+    
+    // Legs alternating on beats - more dynamic
+    const leftLegAngle = beatState % 2 === 0 ? 
+        `rotate-[${-20 - beatStrength * 15}deg]` : 
+        `rotate-[${beatStrength * 5}deg]`
+    
+    const rightLegAngle = beatState % 2 === 1 ? 
+        `rotate-[${20 + beatStrength * 15}deg]` : 
+        `rotate-[${-beatStrength * 5}deg]`
+        
+    // Small bounce for whole figure
+    const figureTransform = `translateY(${beatStrength * 3}px)`
+
     // Portal to render at document body level
     return createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 max-w-sm w-full pointer-events-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 max-w-sm w-full pointer-events-auto relative overflow-hidden">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-medium">Dancing to the Beat!</h3>
                     <button 
@@ -874,29 +922,43 @@ const DancingStickFigure = () => {
                         ✕
                     </button>
                 </div>
-                <div className="flex justify-center items-center h-40">
+                
+                {/* Background elements that pulse with the beat */}
+                <div 
+                    className="absolute inset-0 bg-gradient-to-r from-purple-500 to-blue-500 opacity-20"
+                    style={{ transform: `scale(${1 + beatStrength * 0.05})` }}
+                ></div>
+                
+                <div className="flex justify-center items-center h-40 relative">
                     {/* Stick figure that dances to the beat */}
-                    <div className="relative w-12 h-32">
-                        {/* Head */}
-                        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full border-2 border-black dark:border-white"></div>
+                    <div className="relative w-16 h-40 transition-transform duration-50" style={{ transform: figureTransform }}>
+                        {/* Head - bounces slightly with beat */}
+                        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-10 h-10 rounded-full border-2 border-black dark:border-white transition-transform duration-50" 
+                            style={{ transform: headBounce }}></div>
                         
                         {/* Body */}
-                        <div className="absolute top-8 left-1/2 transform -translate-x-1/2 w-0.5 h-12 bg-black dark:bg-white"></div>
+                        <div className="absolute top-10 left-1/2 transform -translate-x-1/2 w-1 h-16 bg-black dark:bg-white"></div>
                         
-                        {/* Arms - move on beat */}
-                        <div className={`absolute top-10 left-1/2 transform -translate-x-1/2 w-10 h-0.5 bg-black dark:bg-white transition-transform duration-100 ${
-                            isOnBeatNow ? 'rotate-[30deg]' : 'rotate-[15deg]'
-                        }`}></div>
+                        {/* Arms - different positions based on beat number */}
+                        <div className={`absolute top-14 left-1/2 transform -translate-x-1/2 w-14 h-1 bg-black dark:bg-white transition-transform duration-50 ${armsRotation}`}></div>
                         
-                        {/* Left leg - move on beat */}
-                        <div className={`absolute top-20 left-[calc(50%-5px)] transform -translate-x-1/2 origin-top w-0.5 h-10 bg-black dark:bg-white transition-transform duration-100 ${
-                            isOnBeatNow ? 'rotate-[-30deg]' : 'rotate-[0deg]'
-                        }`}></div>
+                        {/* Left leg - alternates with right */}
+                        <div className={`absolute top-26 left-[calc(50%-2px)] transform -translate-x-1/2 origin-top w-1 h-13 bg-black dark:bg-white transition-transform duration-50 ${leftLegAngle}`}></div>
                         
-                        {/* Right leg - move opposite to beat */}
-                        <div className={`absolute top-20 left-[calc(50%+5px)] transform -translate-x-1/2 origin-top w-0.5 h-10 bg-black dark:bg-white transition-transform duration-100 ${
-                            isOnBeatNow ? 'rotate-[0deg]' : 'rotate-[-30deg]'
-                        }`}></div>
+                        {/* Right leg - alternates with left */}
+                        <div className={`absolute top-26 left-[calc(50%+2px)] transform -translate-x-1/2 origin-top w-1 h-13 bg-black dark:bg-white transition-transform duration-50 ${rightLegAngle}`}></div>
+                    </div>
+                    
+                    {/* Beat visualizer circles */}
+                    <div className="absolute bottom-0 left-0 right-0 flex justify-center space-x-2 mb-2">
+                        {[0, 1, 2, 3].map((beat) => (
+                            <div 
+                                key={beat} 
+                                className={`w-3 h-3 rounded-full transition-all duration-100 ${
+                                    beatState === beat ? 'bg-green-500 scale-125' : 'bg-gray-400 scale-100'
+                                }`}
+                            ></div>
+                        ))}
                     </div>
                 </div>
             </div>
